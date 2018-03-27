@@ -1,0 +1,14 @@
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">        
+        <a class="" href="index.php?page=home&cmd=edit_device&device_id=<?php echo $device->id?>"><?php echo $device->name?></a>            
+      </th>
+      <th scope="col"><?php echo locstr("Curr Temp")?></th>
+      <th scope="col"><?php echo locstr("Curr Mode")?></th>      
+    </tr>
+  </thead>
+	<tbody>
+    <?php echo $device->status==SalusDevice::STATUS_OFFLINE?('<tr><td><div style="color:red">'.locstr('Offline').'</div></td></tr>'):$zones_html ?>
+	</tbody>
+</table>

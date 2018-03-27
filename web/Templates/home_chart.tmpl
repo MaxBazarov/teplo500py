@@ -1,0 +1,125 @@
+<div style="width:90%;" >
+        <canvas id="canvas" class="chartjs-render-monitor" style="height:300px"></canvas>
+    </div>    
+    <div>
+        <button type="button" class="btn btn-secondary btn-sm" style="display:none" id="prevDay">&lt;&lt;</button>
+        <button type="button" class="btn btn-secondary btn-sm" style="display:none"  id="nextDay">&gt;&gt;</button>
+    </div>
+    <script>     
+        function load_date(date){            
+            request.open('GET', '<?php echo $sys_baseurl?>/index.php?rest_page=client&cmd=get_chart_data&date='+date, true);
+            request.send(null);
+        }
+        var config = {
+            type: 'line',
+            date: '<?php echo date_str($date)?>',
+            data: {
+            },
+            options: {
+                responsive: true,                
+                maintainAspectRatio: false,
+                legend:{
+                    position:"bottom",
+                },
+                title:{
+                    display:true,
+                    text:'<?php echo locstr("Temperature values for {1}/chart",date_str($date))?>',
+                },
+                tooltips: {
+                    mode: 'index',
+                    intersect: true,
+                },
+                hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
+                scales: {
+                    xAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: false,
+                            labelString: 'Time'
+                        }
+                    }],
+                    yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: false,
+                            labelString: 'Temp',                            
+                        },
+                        ticks:{
+                            stepSize:0.5,
+                            suggestedMin: 19,
+                            suggestedMax: 23
+                        }
+                    }]
+                }
+            }
+        };
+
+        var request;
+        if (window.XMLHttpRequest) { // Mozilla, Safari, ...
+          request = new XMLHttpRequest();
+        } else if (window.ActiveXObject) { // IE
+          try {
+            request = new ActiveXObject('Msxml2.XMLHTTP');
+          } 
+          catch (e) {
+            try {
+              request = new ActiveXObject('Microsoft.XMLHTTP');
+            } 
+            catch (e) {}
+          }
+        }
+
+        request.onreadystatechange = function() {            
+            console.log(request.responseText);
+            if(request.readyState === 4) { // done
+                if(request.status === 200) { // complete                      
+                    data = JSON.parse(request.responseText);
+                    config.date = data.date;
+                    config.options.title.text = data.date_txt;
+                    config.data.datasets = data.datasets;
+                    config.data.labels = data.labels;
+                    window.myLine.update();
+
+                    //                                    
+                    prevDay = document.getElementById('prevDay');                    
+                    if(data.prev_date.length){
+                        prevDay.innerHTML = '<< '+data.prev_date_txt;
+                        prevDay.addEventListener('click', function() {            
+                           load_date(data.prev_date);
+                        });
+                        $("#prevDay").show();
+                    }else{
+                        $("#prevDay").hide();
+                    }
+                    
+
+                    nextDay = document.getElementById('nextDay');                                  
+                    if(data.next_date.length){
+                        nextDay.innerHTML = data.next_date_txt+' >>';
+                        nextDay.addEventListener('click', function() {            
+                            load_date(data.next_date);
+                        });
+                        $("#nextDay").show();
+                    }else{
+                        $("#nextDay").hide();
+                    }
+                    //
+                    
+                }
+            }
+        };
+
+
+        window.onload = function() {
+            var ctx = document.getElementById("canvas").getContext("2d");
+            window.myLine = new Chart(ctx, config);
+            //  window.myLine.canvas.parentNode.style.height = '256px';
+
+            load_date(config.date);
+        };
+
+    
+    </script>

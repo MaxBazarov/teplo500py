@@ -1,0 +1,1 @@
+SALUS ALERT! CRITICALLY LOW TEMPERATURE <?php echo $current_temp?>!

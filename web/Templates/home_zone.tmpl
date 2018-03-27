@@ -1,0 +1,11 @@
+<tr>
+  <td>
+    <a class="" href="index.php?page=home&cmd=edit_zone&zone_id=<?php echo $zone->id?>"><?php echo $zone->name?></a>
+  </td>
+  <td>
+    <b><div><?php echo temp_to_str($zone->current_temp)?><?php echo $zone->heating?'🔥':''?></div></b>
+  </td>
+  <td>
+  	<a class="" href="index.php?page=home&cmd=edit_zone_temp&zone_id=<?php echo $zone->id?>"><?php echo $zone->mode_str()?></a>    
+  </td>
+</tr>

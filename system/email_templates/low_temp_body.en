@@ -1,0 +1,5 @@
+Hello <?php echo $client_name?>
+
+The temperature in "<?php echo $zone_name?>" is <?php echo $current_temp?>.
+
+Regards.

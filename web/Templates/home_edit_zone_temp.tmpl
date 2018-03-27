@@ -1,0 +1,63 @@
+<?php echo $layout_top?>
+
+<h2><?php echo locstr('Set Temperature')?></h2>
+
+ <div class="alert alert-danger" role="alert" <?php echo $error_msg==''?'style="display:none"' : ''?> >
+    <?php echo $error_msg?>
+  </div>
+
+<form method="post" action="<?php echo $form_url?>">          
+  <div class="form-group">
+    <label for="man_temp" id="man_temp_label"><?php echo locstr("Set Manually")?></label>
+
+    <div class="row">
+
+		<div class="input-group col-8 bz-spinner">
+	   	  <input type="text" class="form-control" id="man_temp"  name="man_temp"	   	 
+	   	  	value="<?php echo $man_temp?>" org-value="<?php echo $man_temp?>" 
+	   	  	aria-describedby="man_temp_label"
+	   	  />	   			
+
+		  <div class="input-group-append">
+		    <button class="btn btn-danger" type="button" data-dir="up">
+		    	<i class="fa fa-chevron-up fa-1x"></i>
+		    </button>
+		    <button class="btn btn-info" type="button" data-dir="dwn">
+		    	<i class="fa fa-chevron-down fa-1x"></i>
+		    </button>
+		    <button class="btn btn-secondary" type="button" data-dir="reset">
+		    	<i class="fa fa-undo fa-1x"></i>
+		    </button>
+		  </div>
+		</div>
+	</div>
+
+	<script>
+		$(document).on('click', '.bz-spinner button', function () {    
+			var btn = $(this);			
+			var input = btn.closest('.bz-spinner').find('input');
+			var oldValue = btn.closest('.bz-spinner').find('input').val().trim();
+			var newVal = 0;
+			
+			if (btn.attr('data-dir') == 'up') {
+				newVal = parseFloat(oldValue) + 0.5;
+			}else if (btn.attr('data-dir') == 'reset') {
+				newVal = input.attr('org-value');
+			} else {
+				if (oldValue > 1) {
+					newVal = parseFloat(oldValue) - 0.5;
+				} else {
+					newVal = 1;
+				}
+			}
+			input.val(newVal);
+		});
+		</script>
+
+
+  </div>
+  <button type="submit" class="btn btn-primary" name="save" value="save"><?php echo locstr('Save')?></button>
+  <button class="btn btn-secondary" name="cancel" value="cancel"><?php echo locstr('Cancel')?></button>
+</form>
+
+<?php echo $layout_bottom?> 

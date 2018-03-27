@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title><?php echo $sys_name?></title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+  </head>
+  <body>   
+
+    <!-- Page content  -->
+    <div class="container">
+      <div>
+        <h3><?php echo $msg_header?></h3>
+      </div>
+
+      <div class="alert alert-danger" role="alert" <?php echo $error_msg==''?'style="display:none"' : ''?> >
+        <?php echo $error_msg?>
+      </div>
+      
+        <form method="post" action="?page=login">          
+          <div class="form-group">
+            <input type="email" name="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="<?php echo locstr('Email')?>"
+              value="<?php echo $email?>">
+          </div>
+          <div class="form-group">
+            <input type="password" name="password" class="form-control" id="exampleInputPassword1" placeholder="<?php echo locstr('Password')?>">
+          </div>
+          <button type="submit" class="btn btn-primary" name="login" value="login"><?php echo locstr('Log In')?></button>
+        </form>
+      
+    </div> <!-- /container -->
+
+  </body>
+</html>
+
+
