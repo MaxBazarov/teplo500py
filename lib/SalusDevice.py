@@ -1,6 +1,8 @@
 from utils.py import *
-import salus-emul
 import time
+import xml.etree.ElementTree as ET
+
+import salus-emul
 from SalusZone import SalusZone
 
 STATUS_UNDEFINED = 0
@@ -41,7 +43,7 @@ class SalusDevice:
 		## search for <a class="deviceIcon online " href="control.php?devId=70181">STA00007781 </a>		
 		href_nodes =  div_node.findall("a[contains(@class,'deviceIcon')]")
 
-		if href_nodes.count()==0:		
+		if not href_nodes:
 			return log_error('SalusDevice:load_from_dom: Can not find <a/>')
 		
 		href_node = href_nodes[0]
@@ -89,8 +91,8 @@ class SalusDevice:
 				'token': self.token
 			}
 			## GET DEVICE HTML FROM IT500 SITE
-			res = net_http_request( SalusConnect.SET_URL,SalusConnect.DEVICES_URL, data,'POST')
-			file_put_contents(app.home_path()+'/local/output/device_'+self.id+'_switch_esm.html',res['content']);
+			req = net_http_request( SalusConnect.SET_URL,SalusConnect.DEVICES_URL, data,'POST')
+			file_put_contents(app.home_path()+'/local/output/device_'+self.id+'_switch_esm.html',req.text);
 		
 		
 		return log_ok('switched')
@@ -161,90 +163,79 @@ class SalusDevice:
 			return False
 
 		## PARSE HTML CONTENT	
-		$dom = new DOMDocument;
-		libxml_use_internal_errors(true);
-		if(!$dom->loadHTML($html,LIBXML_NOWARNING)){
-			log_error('SalusDevice: load_from_site(): Can not parse device HTML');
-			return false;
-		}
-		libxml_clear_errors();	
+		root = ET.fromstring(html)
+		## TODO: handle errors	
 
-		$xpath = new DOMXpath($dom);
 
-		// search for <div id="TabbedPanels1" class="TabbedPanels">
-		// 	 <ul class="TabbedPanelsTabGroup">
-		// 		 <li class="TabbedPanelsTab" 
+		## search for <div id="TabbedPanels1" class="TabbedPanels">
+		## 	 <ul class="TabbedPanelsTabGroup">
+		## 		 <li class="TabbedPanelsTab" 
 
-		$li_nodes = $xpath->query('//div[@id="TabbedPanels1"]/ul[@class="TabbedPanelsTabGroup"]/li');
-		if($li_nodes===false){
-			log_debug('SalusDevice: load_from_site(): not found zones');
-			return true;
-		}
-		log_debug('SalusDevice: load_from_site(): found zones');
-
-		$parent_node = $xpath->query('//div[@id="mainContentPanel"]')[0];
-		if(!isset($parent_node)){
-			log_error('SalusDevice: load_from_site() can not find <div id="mainContentPanel">');
-			return false; 
-		}
-
-		// SEARCH FOR TOKEN
-		{
-			$token_node = $xpath->query('.//input[@id="token"]',$parent_node)[0];
-			if(!isset($token_node)) return log_error('SalusDevice: load_from_site() can not find <input id="token">');								
-			self.token = 	 get_node_attr_value($token_node,'value');
-		}
+		li_nodes = root.findall('//div[@id="TabbedPanels1"]/ul[@class="TabbedPanelsTabGroup"]/li');
+		if not li_nodes:
+			log_debug('SalusDevice: load_from_site(): not found zones')
+			return True
 		
-		// ADD ZONES
-		$zone_last_index = 1;
-		foreach ($li_nodes as $li_node) 
-		{				
-			$zone_id = get_node_attr_value($li_node,'id');
-			if( $zone_id==='settings') continue;
-
-			// TRY TO FIND EXISTING ZONE
-			$existing_zone = self.get_zone_by_index($zone_last_index);
-			$zone = $existing_zone;
-
-			// CREATE NEW ZONE IF NEEDED
-			if(!$zone){
-				$zone = new SalusZone($this,$zone_last_index,uniqid());
-			}
-
-			if(!$zone->load_from_dom($xpath,$parent_node,$li_node,!$existing_zone)){
-				log_error('SalusDevice:load Can not init Zone');
-				return false;
-			}
+		log_debug('SalusDevice: load_from_site(): found zones')
 
 
-			// completed zone info
-			if(!$existing_zone){
-				array_push(self.zones, $zone);
-			}
+		parent_node = root.find('//div[@id="mainContentPanel"]')
+		if parent_node is None:
+			log_error('SalusDevice: load_from_site() can not find <div id="mainContentPanel">')
+			return False
+		
 
-			$zone_last_index++;
+		## SEARCH FOR TOKEN	
+		token_node = parent_node.find('.//input[@id="token"]')
+		if token_node is None:
+			return log_error('SalusDevice: load_from_site() can not find <input id="token">')
+		
+		self.token = token_node.attrib['value']
+		
+		
+		## ADD ZONES
+		zone_last_index = 1
+		for li_node in li_nodes:
+					
+			zone_id = li_node.attrib['id']
+			if zone_id=='settings':
+				continue;
 
+			## TRY TO FIND EXISTING ZONE
+			existing_zone = self.get_zone_by_index(zone_last_index)
+			zone = existing_zone
+
+			## CREATE NEW ZONE IF NEEDED
+			if zone is None:
+				zone = SalusZone(self,zone_last_index,uniqid())
 			
-		}		
 
-		return true;
+			if !zone->load_from_dom(parent_node,li_node,existing_zone is None):
+				log_error('SalusDevice:load Can not init Zone')
+				return False
+			
 
-	}
+			## completed zone info
+			if existing_zone is None:
+				self.zones.append(zone)
+			
+			zone_last_index++
 
-
-	function get_zone_by_index($index)
-	{
-		if( count(self.zones)<($index-1)) return false;
-		return self.zones[$index-1];
-	}
-
+		return True
 
 
 
-	// return: 
-	//   HTML content or false=failed
-	function _load_content_from_file()
-	{
+	def get_zone_by_index(self,index):
+		if len(self.zones)<(index-1):
+			return None
+		return self.zones[index-1]
+
+
+
+	## return: 
+	##   HTML content or false=failed
+	def _load_content_from_file(self):
+	
 		global $app;
 		$file_name = $app->home_path().'/local/fakes/device_'.self.id.'.html';
 		log_debug('SalusDevices: _load_content_from_file: '.self.id.' file="'.$file_name.'"');
@@ -279,11 +270,10 @@ class SalusDevice:
 				'lang'=>'en'
 			);
 			// GET DEVICE HTML FROM IT500 SITE
-			$request_result = net_http_request( self.href,SalusConnect::DEVICES_URL, $data,'GET',self.client->get_phpsessionid() );
-			$html = $request_result['content'];
+			req = net_http_request( self.href,SalusConnect::DEVICES_URL, $data,'GET',self.client->get_phpsessionid() );
 
 			// dump HTML into file for future analyse
-			file_put_contents($app->home_path().'/local/output/device_'.self.id.'.html',$html);	
+			file_put_contents($app->home_path().'/local/output/device_'.self.id.'.html',req.text);	
 		}
 		log_debug('SalusDevice: load_from_site: done');
 

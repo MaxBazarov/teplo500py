@@ -1,3 +1,5 @@
+import requests
+
 # DEFINE CONSTANTS
 Class Log(Enum):
 	OK= 1 
@@ -155,15 +157,17 @@ make an http POST request and return the response content and headers
 '''
 
 ##import urllib2,cookielib
-import requests
 
+
+## see details here -http://docs.python-requests.org/en/master/user/quickstart/
+## return req
+##		.text
+##		.cookies
+##		.headers
 def net_http_request(url,referer,data,method):
 
 	log_debug('net_http_request(): url = '+url)
 
-
-	data_url = http_build_query ($data);
-    data_len = len(data_url)
 
 	Cookie = ""
 	UserAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Safari/604.1.38';
@@ -190,122 +194,15 @@ def net_http_request(url,referer,data,method):
 
 		req = requests.post(url,data = data,headers=headers)
 	
-
-	return {
-    	'content' : req.text,
-        'headers' : req.headers
-    }
+	return req
 
 
-'''
-    $data_url = http_build_query ($data);
-    $data_len = strlen ($data_url);
 
-    $UserAgent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Safari/604.1.38';
-    $Cookie="";
-    if($PHPSESSID!=''){
-    	//Cookie: PHPSESSID=f3hstlalnpskirl286d4mhfhs6
-    	$Cookie.='PHPSESSID='.$PHPSESSID.';';
-    }
-    
-	log_debug('net_http_request(): url = '.$url);
-	$header = "Connection: close\r\nHost: salus-it500.com\r\nOrigin: https://salus-it500.com\r\nReferer: $referer\r\nLocation: $referer\r\nUser-Agent: $UserAgent\r\nCookie: $Cookie\r\n";
+import time
 
-	if($method=='GET'){
-		$header.="Content-Type: text/html; charset=utf-8\r\n";
-		$header.="Content-Length: $data_len\r\n";
-	}else{
-		$header.="Content-type: application/x-www-form-urlencoded\r\n";
-	}
-    
-    $content = file_get_contents ($url, false, stream_context_create(array(
-		'http'=>array(
-    		'method'=>$method,
-            'header'=>$header,
-            'content'=>$data_url
-        ),
-		"ssl"=>array(
-            "verify_peer"=>false,
-            "verify_peer_name"=>false
-        )
-    )));
+def uniqid(prefix = ''):
+    return prefix + hex(int(time()))[2:10] + hex(int(time()*1000000) % 0x100000)[2:7]
 
-    if($content===false) return false;
-
-    //echo '<br/>'.$url.'<br/>';
-    //var_dump($header);
-
-    return array (
-    	'content'=>$content,
-        'headers'=>$http_response_header
-    );
-}
-
-''''
-
-/*
- Taken from http://snipplr.com/view/17242/parse-http-response/
-*/
-TODO: REPLACE FUNCTION
-function parse_http_headers ($raw_headers) 
-{
-    $headers = array();
-  	foreach($raw_headers as $str)
-  	{
-  		//log_debug('parse_http_headers: header='.$str);
-		if(strpos($str,':')===false) continue;
-	    list($headername, $headervalue) = explode(':', trim($str), 2);
-
-	    $headername = $headername;
-	    $headervalue = ltrim($headervalue);
-
-	    if (isset($headers[$headername])) 
-	        $headers[$headername] .= ',' . $headervalue;
-	    else 
-	        $headers[$headername] = $headervalue; 
-    }
-    return $headers;
-}
-'''
-
-'''
-TODO: REPLACE FUNCTION
-//Set-Cookie: PHPSESSID=3m91ah43nfbcugj3h95il4fej2; path=/
-function  get_cookies_from_rawheaders($raw_headers)
-{
-	$headers = parse_http_headers($raw_headers);
-	$cookies_raw = $headers['Set-Cookie'];
-
-	
-
-	if (isset($cookies_raw)){
-		$cookie_pairs = explode(';', $cookies_raw );
-		$cookies = array();
-		foreach($cookie_pairs as $str)
-	  	{
-		    list($cookie_name, $cookie_value) = explode('=', trim($str), 2);
-		    $cookies[$cookie_name] = ltrim($cookie_value);
-		}
-		return $cookies;
-	} else{
-		return array();
-	}
-}
-'''
-
-'''
-TODO: REPLACE FUNCTION
-function get_node_attr_value(&$node,$attr_name)
-{
-	foreach ($node->attributes as $attr) 
-    { 
-    	if($attr->nodeName==$attr_name){
-    		return $attr->nodeValue;
-    	}
-    } 
-    return false;
-}
-'''
 
 '''
 TODO: REPLACE FUNCTIONS

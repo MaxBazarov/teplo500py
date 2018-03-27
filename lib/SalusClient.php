@@ -438,11 +438,10 @@ class SalusClient
 		$data = array (
 			'lang'=>'en'
 		);
-		$request_result = net_http_request( SalusConnect::START_URL,SalusConnect::START_URL, $data,'GET', $this->PHPSESSID );	
-	 	$cookies = get_cookies_from_rawheaders($request_result['headers']);	
+		req = net_http_request( SalusConnect::START_URL,SalusConnect::START_URL, $data,'GET', $this->PHPSESSID );	
 
 		{
-			$this->PHPSESSID = strval($cookies['PHPSESSID']);
+			$this->PHPSESSID = strval(req.cookies['PHPSESSID']);
 			log_debug('login_to_site: PHPSESSID="'.$this->PHPSESSID.'"');
 		}
 
