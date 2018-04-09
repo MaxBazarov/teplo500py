@@ -1,57 +1,61 @@
+from datetime import date
+import os.path
+
 
 def save_client_history(client):
 
 	## PREPARE LOG FILE
-	$date = new DateTime("now",new DateTimeZone('Europe/Moscow'));
-	$time = $date->format('H:i');
-	
-	$path = $client->get_folder_path().'/history/'.$date->format('Y-m-d');
 
+	date = datetime.now()
+	time = date.strftime('%H:%M')	
 
-	$file_existed = file_exists($path);
+	file_path = client.get_folder_path()+'/history/' + date.strftime('%y-%m-%d')	
+	file_existed = os.path.isfile(file_path)
 
-	$file = fopen($path,'a');	
-	if(!$file) return log_error('SalusClient: _save_history: can not file for append : '.$path);
+	try:
+		with open(file_path, 'a') as fp:
+		
+		## WRITE TO FILE AT FIRST TIME
+		if not file_existed:
+			_write_history_header(client,fp)			
 
-	// WRITE TO FILE AT FIRST TIME
-	if(!$file_existed){
-		SalusHistoryHelper::_write_history_header($client,$file);
+		## START 		
+		fp.write(time+';')
+
+		##ask every device to save his state 
+		for dev in client.devices:		
+			for zone in dev.zones:		
+				fp.write(zone.current_temp+';')
+				fp.write(zone.current_mode_temp+';')				
+		
+		fp.write("\n")
+
+	except OSError as err:
+		log_error("save_client_history() {0}".format(err))
+		return False
+	except:
+		log_error("save_client_history(): Unexpected error:"+sys.exc_info()[0])		
+		return False
+
+	return True
+
+def  function find_client_history(client,date):
+
+	result = {
+		'prev_date':None,
+		'next_date':None,
+		'date':date
 	}
 
-	// START 
-	fwrite($file,$time.';');
+	base_path = client.get_folder_path()+'/history/';
+	now = datetime.now()
 
-	// ask every device to save his state 
-	foreach ($client->devices as $dev)
-	{
-		foreach ($dev->zones as $zone)
-		{
-			fwrite($file,$zone->current_temp.';');
-			fwrite($file,$zone->current_mode_temp.';');
-		}	
-	}
-	fwrite($file,"\n");
-	fclose($file);
+	## check existing of data
+	file_path  = base_path + date.strftime('%y-%m-%d')
+	if not os.path.isfile(file_path):
+		return False
 
-	return true;		
-
-}
-
-static function find_client_history($client,$date){
-	$result = array(
-		'prev_date'=>null,
-		'next_date'=>null,
-		'date'=>$date
-	);
-	$base_path = $client->get_folder_path().'/history/';
-	$now = new DateTime('NOW');
-
-
-	// check existing of data
-	$path  = $base_path.$date->format('Y-m-d');
-	if(!file_exists($path)) return false;		
-
-	// date is not today (we are in the past)
+	## date is not today (we are in the past)
 	if(!$date->diff($now)==0){
 		$next_date =  clone $date;
 		$next_date->add(new DateInterval('P1D'));
@@ -69,9 +73,9 @@ static function find_client_history($client,$date){
 	}
 
 
-	return $result;
+	return result
 
-}
+
 
 static function load_client_history($client,$date){
 	$path = $client->get_folder_path().'/history/'.$date->format('Y-m-d');

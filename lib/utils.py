@@ -1,4 +1,5 @@
 import requests
+import os.path
 
 # DEFINE CONSTANTS
 Class Log(Enum):
@@ -103,7 +104,6 @@ def save_json_config(file_path, data):
 
 
 def load_json_config(file_path):
-	import os.path
 
 	if not os.path.isfile(file_path):
 		log_error("load_json_config(): No such file "+file_path)
