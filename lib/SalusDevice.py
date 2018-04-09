@@ -1,5 +1,6 @@
 from utils.py import *
 import time
+import os
 import xml.etree.ElementTree as ET
 
 import salus-emul
@@ -236,79 +237,70 @@ class SalusDevice:
 	##   HTML content or false=failed
 	def _load_content_from_file(self):
 	
-		global $app;
-		$file_name = $app->home_path().'/local/fakes/device_'.self.id.'.html';
-		log_debug('SalusDevices: _load_content_from_file: '.self.id.' file="'.$file_name.'"');
-		if (!file_exists($file_name)) {
-			log_error('No '.$file_name.' file');
-			return false;
-		}
+		file_name = app.home_path()+'/local/fakes/device_'+self.id+'.html'
+		log_debug('SalusDevices: _load_content_from_file: '+self.id+' file="'+file_name+'"')
+		if not os.path.exists(file_name):
+			log_error('No '+file_name+' file')
+			return False		
 
-		$html = file_get_contents($file_name);
-		if ($html === false) {
-			log_error('Can not load '.$file_name);
-			return false;
-		}
-
-		return $html;
-	}
+		with os.open(file_name,'r') as file:
+			html = file.read()
+	
+		return html
+	
 
 
-	// return: 
-	//   HTML content or false=failed	
-	function _load_content_from_site()
-	{
-		global $app;
-		$html = '';
+	## return: 
+	##   HTML content or false=failed	
+	def _load_content_from_site(self):
+	
+		html = '';
 
-		log_debug('SalusDevices: _load_content_from_site: '.self.id.' href="'.self.href.'"');
-		if(self.is_offline()) return false;
-
-		{
-			/* SETUP CONTEXT */
-			$data = array (
-				'lang'=>'en'
-			);
-			// GET DEVICE HTML FROM IT500 SITE
-			req = net_http_request( self.href,SalusConnect::DEVICES_URL, $data,'GET',self.client->get_phpsessionid() );
-
-			// dump HTML into file for future analyse
-			file_put_contents($app->home_path().'/local/output/device_'.self.id.'.html',req.text);	
-		}
-		log_debug('SalusDevice: load_from_site: done');
+		log_debug('SalusDevices: _load_content_from_site: '+self.id+' href="'+self.href+'"')
+		if self.is_offline():
+		 return False
 
 		
-		return $html;
-	}
+		##SETUP CONTEXT 
+		data = {
+			'lang':'en'
+		}
+		## GET DEVICE HTML FROM IT500 SITE
+		req = net_http_request( self.href,SalusConnect::DEVICES_URL, data,'GET',self.client->get_phpsessionid() )
+
+		## dump HTML into file for future analyse
+		file_name = app->home_path()+'/local/output/device_'+self.id+'.html'
+		with os.open(file_name, 'w') as file:
+		    file.write(req.text)
+		
+		log_debug('SalusDevice: load_from_site: done')
+
+		
+		return req.text
+	
 
 
-	function save_name_to_site(){
+	def save_name_to_site(self):
 		log_debug('SalusDevice: save_name_to_site : starting');
 
-		if(self.client->login_to_site()===false){
-			return log_error('SalusDevice: save_name_to_site: failed to login');
+		if not self.client->login_to_site():
+			return log_error('SalusDevice: save_name_to_site: failed to login')
+		
+
+		## SETUP CONTEXT 
+		data = {
+			'name' : self.name,
+			'devId' : self.id,
+			'lang' : 'en',
+			'submitRename' : 'submit'
 		}
 
-		/* SETUP CONTEXT */
-		$data = array (
-			'name' => self.name,
-			'devId' => self.id,
-			'lang'=>'en',
-			'submitRename' => 'submit'
-		);
+		req = net_http_request( SalusConnect::RENAME_DEVICE_URL,SalusConnect::DEVICES_URL, data,'POST', self.client->get_phpsessionid(),'text/html')
 
-
-		$result = net_http_request( SalusConnect::RENAME_DEVICE_URL,SalusConnect::DEVICES_URL, $data,'POST', self.client->get_phpsessionid(),'text/html');
-		if($result===false){
-			return log_error('SalusDevice: save_name_to_site: failed to get "'.SalusConnect::RENAME_DEVICE_URL.'"');
-		}
-		log_ok('SalusDevice: save_name_to_site: completed');
-
-		return true;
-	}
+		if !req:
+			return log_error('SalusDevice: save_name_to_site: failed to get "'+SalusConnect::RENAME_DEVICE_URL+'"')
 	
-}
+		log_ok('SalusDevice: save_name_to_site: completed')
 
-
-
-?>
+		return True
+	

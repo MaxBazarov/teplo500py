@@ -2,7 +2,7 @@
 
 include "Emailer.php";
 include "Alert.php";
-include "SalusHistoryHelper.php";
+import SalusHistoryHelper
 
 class SalusClient
 {
@@ -327,9 +327,9 @@ class SalusClient
 		);
 	}
 
-	function save_history(){
-		return SalusHistoryHelper::save_client_history($this);
-	}
+	def save_history(self):
+		return SalusHistoryHelper.save_client_history(self)
+	
 
 
 	function get_folder_path()

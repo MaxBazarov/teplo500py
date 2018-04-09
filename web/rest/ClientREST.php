@@ -1,5 +1,6 @@
 <?php
 
+import SalusHistoryHelper
 
 class ClientREST extends AbstractREST
 {
@@ -16,10 +17,10 @@ class ClientREST extends AbstractREST
         if($date_str=='') return AbstractREST::ShowNoData(); 
         $date = new DateTime($date_str);
 
-        $found = SalusHistoryHelper::find_client_history($app->client,$date);
+        found = SalusHistoryHelper.find_client_history(app.client,date)
         if($found===false) return AbstractREST::ShowNoData(); 
 
-        $raw_data = SalusHistoryHelper::load_client_history($app->client,$date);
+        raw_data = SalusHistoryHelper.load_client_history(app.client,date)
         if($raw_data===false){
             log_error('ClientREST.get_client_data(): failed to load client history');
             return AbstractREST::ShowError();   
