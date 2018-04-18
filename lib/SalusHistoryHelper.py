@@ -13,23 +13,21 @@ def save_client_history(client):
 	file_existed = os.path.isfile(file_path)
 
 	try:
-		with open(file_path, 'a') as fp:
-		
-		## WRITE TO FILE AT FIRST TIME
-		if not file_existed:
-			_write_history_header(client,fp)			
+		with open(file_path, 'a') as fp:		
+			## WRITE TO FILE AT FIRST TIME
+			if not file_existed:
+				_write_history_header(client,fp)			
 
-		## START 		
-		fp.write(time+';')
+			## START 		
+			fp.write(time+';')
 
-		##ask every device to save his state 
-		for dev in client.devices:		
-			for zone in dev.zones:		
-				fp.write(zone.current_temp+';')
-				fp.write(zone.current_mode_temp+';')				
-		
-		fp.write("\n")
-
+			##ask every device to save his state 
+			for dev in client.devices:		
+				for zone in dev.zones:		
+					fp.write(zone.current_temp+';')
+					fp.write(zone.current_mode_temp+';')				
+			
+			fp.write("\n")
 	except OSError as err:
 		log_error("save_client_history() {0}".format(err))
 		return False
@@ -39,7 +37,7 @@ def save_client_history(client):
 
 	return True
 
-def  function find_client_history(client,date):
+def function find_client_history(client,date):
 
 	result = {
 		'prev_date':None,
@@ -47,7 +45,7 @@ def  function find_client_history(client,date):
 		'date':date
 	}
 
-	base_path = client.get_folder_path()+'/history/';
+	base_path = client.get_folder_path()+'/history/'
 	now = datetime.now()
 
 	## check existing of data
@@ -56,69 +54,66 @@ def  function find_client_history(client,date):
 		return False
 
 	## date is not today (we are in the past)
-	if(!$date->diff($now)==0){
-		$next_date =  clone $date;
-		$next_date->add(new DateInterval('P1D'));
+	if (now-date).days>0:
+		next_date = date + datetime.timedelta(days=1) 		
 
-		$path  = $base_path.$next_date->format('Y-m-d');
-		if(file_exists($path)) $result['next_date'] = $next_date;
-	}
+		next_file_path  = base_path + next_date.strftime('%y-%m-%d')
+		if os.path.isfile(next_file_path):
+			result['next_date'] = next_date
+	
 
-	{
-		$prev_date =  clone $date;
-		$prev_date->sub(new DateInterval('P1D'));
-
-		$path  = $base_path.$prev_date->format('Y-m-d');
-		if(file_exists($path)) $result['prev_date'] = $prev_date;
-	}
-
+	if True:
+		prev_date = date - datetime.timedelta(days=1) 		
+		pref_file_path  =  base_path + prev_date.strftime('%y-%m-%d')
+		if os.path.isfile(pref_file_path):
+			result['prev_date'] = prev_date
 
 	return result
 
 
 
-static function load_client_history($client,$date){
-	$path = $client->get_folder_path().'/history/'.$date->format('Y-m-d');
+def function load_client_history(client,date):
+
+	file_path = client.get_folder_path()+'/history/'+ date.strftime('%y-%m-%d')
 	
-	$handle = fopen($path, "r");
-	if (!$handle) return false;
-
-	$data = array(
-		'header'=>array(),
-		'records'=>array()
-	);
-
-	$buffer = fgets($handle, 4096);
-	if( $buffer === false) return false;
-	$header = explode(';',$buffer);
-	array_pop($header);
-	$data['header'] = $header;// drop last empty ;
-
-    while (($buffer = fgets($handle, 4096)) !== false) {
-
-    	$record = explode(';',preg_replace( "/\r|\n/", "", $buffer ));
-    	array_pop($record); // drop last empty ;
-        $data['records'][] = $record;
-    }
-    fclose($handle);
-	
-	return $data;
-
-}
-
-
-private  static function _write_history_header($client,&$file)
-{
-	fwrite($file,'time;');
-	foreach ($client->devices as $dev)
-	{
-		foreach ($dev->zones as $zone)
-		{
-			$zone_name = $zone->name.'('.$dev->id.')';
-			fwrite($file,$zone_name.'/Current Temperature;');
-			fwrite($file,$zone_name.'/Auto Temperature;');
-		}	
+	result = {
+		'header':[],
+		'records':[]
 	}
-	fwrite($file,"\n");
-}
+
+	try:
+		with open(file_path, 'r') as fp:		
+			counter = 0
+			for line in fp:			
+				if counter==0:
+					## process first header line (drop last empty ;)					
+					data['header'] = line.split(':').pop()
+				else:
+					## process other lines
+					data['records'].append( line.split(':').pop() )
+				counter++
+
+			return result
+	except OSError as err:
+		log_error("load_client_history() {0}".format(err))
+		return None
+	except:
+		log_error("load_client_history(): Unexpected error:"+sys.exc_info()[0])		
+		return None
+
+	return None
+
+def function _write_history_header(client,fp):
+
+	fp.write('time;')
+	for dev in client.devices:
+		for zone in dev.zones:		
+			zone_name = zone.name+'('+dev.id+')'
+			fp.write(zone_name+'/Current Temperature;')
+			fp.write(zone_name+'/Auto Temperature;')
+			
+	fwrite(file,"\n")
+
+	return True
+
 
