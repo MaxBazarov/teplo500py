@@ -164,12 +164,11 @@ make an http POST request and return the response content and headers
 ##		.text
 ##		.cookies
 ##		.headers
-def net_http_request(url,referer,data,method):
+def net_http_request(url,referer,data,method,PHPSESSID):
 
 	log_debug('net_http_request(): url = '+url)
 
 
-	Cookie = ""
 	UserAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Safari/604.1.38';
 
 	headers = {
@@ -179,20 +178,24 @@ def net_http_request(url,referer,data,method):
 		"Referer" : referer,
 		"Location" :  referer,
 		"User-Agent" : UserAgent,
-		"Cookie": Cookie
 	}
+
+	cookies = {}
+
+	if PHPSESSID!='':
+		cookies['PHPSESSID'] = PHPSESSID
 
 	if method=='GET':
 		headers["Content-Type"] = "text/html"
 		headers['charset'] = "utf-8"
 
 		###header = header + "Content-Length: "+data_len+"\r\n";
-		req = requests.get(url,headers=headers)
+		req = requests.get(url,headers=headers,cookies=cookies)
 		
 	else:
 		headers["Content-type"] = "application/x-www-form-urlencoded"
 
-		req = requests.post(url,data = data,headers=headers)
+		req = requests.post(url,data = data,headers=headers,cookies=cookies)
 	
 	return req
 

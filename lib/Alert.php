@@ -99,7 +99,8 @@ class AlertFactory
 				$alert = new LowTempAlert($id,$alert_config,$alert_data);
 				break;
 			defaults:	
-				return log_error('AlertFactory: CreateAlert: uknown alert id"'.$alert_config->id.'"');			
+				log_error('AlertFactory: CreateAlert: uknown alert id"'.$alert_config->id.'"');			
+				return None
 		}
 
 		return $alert;

@@ -1,568 +1,521 @@
-<?php
+## Standard Libs
+from email.utils import parseaddr
+import cgi
+import os
+import xml.etree.ElementTree as ET
+from datetime import date
 
-include "Emailer.php";
-include "Alert.php";
+## Own Libs
+from utils.py import *
+import Emailer
+import Alert
 import SalusHistoryHelper
+import salus-emul
 
-class SalusClient
-{
+
+## args:
+##	client_id : email address
+## result
+##  ref to SalusClient or False
+
+def Factory_CreateAndLoad(client_id):
+
+	log_debug('Factory_CreateAndLoad: creating client '+client_id+'...')
+
+	client_id =client_id.strip()
 	
-	public $id = '';
-	public $name = '';
-
-	public $alert_email = '';
-	public $devices = array(); // list of {SalusDevice}
-
-	public $data_updated_time = 0; // time of last data update
-
-	// user creds
-	private $login_email = '';
-	private $login_password = '';		
-	public $config = array();
+	if client_id=='':
+		return log_error('Factory_CreateAndLoad: construct: ID undefined')
 	
 
-	private $PHPSESSID = '';
+	client = SalusClient(client_id)
+	
+	if !client.load():
+		return log_error('Factory_CreateAndLoad: run: can not load client')
+	
+
+	log_debug('Factory_CreateAndLoad: created client '+client_id)
+
+	return client
 
 
-	// args:
-	//	client_id : email address
-	// result
-	//  ref to SalusClient or false
+## args:
+##	email : email address
+##	pswd : password
+## result
+##  ref to SalusClient or False
 
-	static function Factory_CreateAndLoad($client_id)
-	{
-		log_debug('Factory_CreateAndLoad: creating client '.$client_id.'...');
+def Factory_CreateAndRegister(name,email,password):
+	log_debug('Factory_CreateAndRegister: creating client')
 
-		$client_id = ltrim(rtrim($client_id));
-		if($client_id===''){
-			return log_error('Factory_CreateAndLoad: construct: ID undefined');	
-		}
+	client = SalusClient(email)
 
-		$client = new SalusClient($client_id);
+	if !client._set_name(name):
+	 return False
+	if !client._set_login(email,password):
+	 return False
+
+	if !client.register():
+		return log_error('Factory_CreateAndRegister: run: can not register new client')
+	
+	if !client.load():
+		return log_error('Factory_CreateAndRegister: run: can not load client')
+
+
+	log_debug('Factory_CreateAndRegister: created client '+client_id)
+
+	return client
+
+
+
+class SalusClient:
+
+	def __init__(self,id):   
+    	id = cgi.espace(id.strip(),True)
+    	
+    	# PUBLIC
+    	self.id = id
+    	self.name = ''
+    	self.alert_email = ''
+    	self.config = {}
+    	self.devices = [] ## list of {SalusDevice}
+    	self.data_updated_time = 0 ## time of last data update
+
+		## PRIVATE 
+		self.login_email = ''
+		self.login_password = ''
+		self.PHPSESSID = ''
 		
-		if($client->load()==false){
-			return log_error('Factory_CreateAndLoad: run: can not load client');
+	## check do we need to update it right now or not?
+    def is_updated_required(self):
+    	if self.data_updated_time==0:
+    	 return True
+
+		conf_period = self.get_auto_update()
+		if conf_period==0: 
+			return True
+
+
+		now_period =  datetime.now() - self.data_updated_time
+
+		return now_period >= conf_period
+
+    def update_from_site(self):
+		log_ok('[CLIENT '+self.id+'] Updating from site...')
+
+		if not self._update_device_list_from_site():
+			return log_error('SalusClient: run: can not init devices')
+		
+		if not self._load_devices_from_site():
+			return log_error('SalusClient: run: can not load devices')		
+		
+		return True
+	
+
+	def switch_esm(self, enable_esm):
+		log_d = lambda message: log_debug('[CLIENT '.self.id.'] switch_esm(): '.message)
+		log_e = lambda message: log_error('[CLIENT '.self.id.'] switch_esm(): '.message)
+		log_ok = lambda message: log_ok('[CLIENT '.self.id.'] switch_esm(): '.message)
+
+		log_d('switching into '+enable_esm)
+
+
+		for device in self.devices:
+			if !device.switch_esm(enable_esm):
+				return log_e('failed to switch')
+
+		log_ok('switched ESM successfully')
+
+		if !self.update_from_site():
+			return log_e('failed to update data')
+        if !self.save_updated():
+        	return log_e('failed to save updated data')
+
+		return True
+	
+
+	def get_auto_update(self):		
+		if 'auto_update' in self.config:
+			return self.config.auto_update
+		else
+			return app.config.defaults.auto_update
+		
+	def get_auto_update_txt(self):
+		period = self.get_auto_update()
+		if period==0:
+			return locstr('Off')
+
+		if period<3600:
+			return (period / 60)+' '+locstr('minute(s)/timediff')
+		elif period<86400:
+			return (period / 3600)+' '+locstr('hour(s)/timediff')
+		else
+			return (period / 86400)+' '+locstr('day(s)/timediff')
+	
+
+	def validate_password(self,pswd):
+		return pswd == self.login_password
+	
+
+	def run_alerts(self):
+	
+		## load old alert data
+		data = self._load_json_config('alerts.data',True,True)
+		if data is None:
+			data = {
+				'alerts':[]
+			}			
+		
+		## iterate know alerts
+		new_data = {
+			'alerts':[]
 		}
 
-		log_debug('Factory_CreateAndLoad: created client '.$client_id);
+		for id in Alert.ALERT_IDS:
+			
+			if !(id in self.config.alerts):
+				continue
 
-		return $client;
-	}
+			conf = self.config.alerts[id]
+			if !conf.on:
+				continue
 
-	// args:
-	//	email : email address
-	//	pswd : password
-	// result
-	//  ref to SalusClient or false
+			log_debug('SalusClient: run_alerts: test alert'+id)
 
-	static function Factory_CreateAndRegister($name,$email,$password)
-	{
-		log_debug('Factory_CreateAndRegister: creating client');
+			existing_data = id in data['alerts']?data['alerts'][id]:{}
 
-		$client = new SalusClient($email);	
-		if(!$client->_set_name($name)) return false;
-		if(!$client->_set_login($email,$password)) return false;
-
-		if(!$client->register()){
-			return log_error('Factory_CreateAndRegister: run: can not register new client');
-		}
-
-		if(!$client->load()){
-			return log_error('Factory_CreateAndRegister: run: can not load client');
-		}
-
-		log_debug('Factory_CreateAndRegister: created client '.$client_id);
-
-		return $client;
-	}
-
-
-	function __construct($id) 
-    {
-    	$if = htmlspecialchars(ltrim(rtrim($id)));
-    	$this->id = $id;     	
-    }
-
-
-	// check do we need to update it right now or not?
-    function is_updated_required(){
-    	if($this->data_updated_time==0) return true;
-
-		$conf_period = $this->get_auto_update();
-		if($conf_period===0) return true;
-
-		$now_period = time() - $this->data_updated_time;
-		return $now_period >= $conf_period;
-
-    }
-
-	function update_from_site(){
-		log_ok('[CLIENT '.$this->id.'] Updating from site...');		
-
-		if($this->_update_device_list_from_site()==false){
-			return log_error('SalusClient: run: can not init devices');
-		}
-
-		if($this->_load_devices_from_site()==false){
-			return log_error('SalusClient: run: can not load devices');
-		}
-		return true;
-	}
-
-	function switch_esm($enable_esm){
-		$log_d = function($message){ return log_debug('[CLIENT '.$this->id.'] switch_esm(): '.$message);};
-		$log_e = function($message){ return log_error('[CLIENT '.$this->id.'] switch_esm(): '.$message);};
-		$log_ok = function($message){ return log_ok('[CLIENT '.$this->id.'] switch_esm(): '.$message);};
-
-
-		$log_d('switching into '.$enable_esm);
-
-		$success = true;
-		array_map(
-			function($device){
-				if(!$device->switch_esm($enable_esm)) $success = false;
-			}
-			,$this->devices
-		);		
-		if(!$success) return $log_e('failed to switch');
-
-		$log_ok('switched ESM successfully');
-
-		if(!$this->update_from_site()) return $log_e('failed to update data');
-        if(!$this->save_updated()) return $log_e('failed to save updated data');
-
-		return true;
-	}
-
-
-	function get_phpsessionid()
-	{		
-		return $this->PHPSESSID;
-	}
-
-	function get_auto_update(){
-		global $app;
-		return property_exists($this->config,'auto_update')?
-			$this->config->auto_update
-			:$app->config->defaults->auto_update
-		;
-	}
-
-	function get_auto_update_txt(){
-		$period = $this->get_auto_update();
-		if($period==0) return locstr('Off');
-
-		if($period<3600) return ($period / 60).' '.locstr('minute(s)/timediff');
-		if($period<86400) return ($period / 3600).' '.locstr('hour(s)/timediff');
-		return ($period / 86400).' '.locstr('day(s)/timediff');
-	}
-
-	function validate_password($pswd){
-		return $pswd == $this->login_password;
-	}
-
-	function run_alerts()
-	{
-		// load old aler data
-		$data = $this->_load_json_config('alerts.data',true,true);
-		if($data===false){
-			$data = array(
-				'alerts'=>array()
-			);
-		}
-
-		// iterate know alerts
-		$new_data = array(
-			'alerts'=>array()
-		);
-		foreach(AlertFactory::ALERT_IDS as $id){
-			$conf = $this->config->alerts->{$id};
-			if(!$conf or !$conf->on) continue;
-
-			log_debug('SalusClient: run_alerts: test alert'.$id);
-
-			$alert = AlertFactory::CreateAlert($id,$conf,$data['alerts'][$id]);
-			if(!$alert){
-				return log_error('SalusClient: _run_zone_alert: can create Alert instance');	
-			}
-			$new_data['alerts'][$id] = $alert->test_client($this);
-		}
+			alert = Alert.CreateAlert(id,conf,existing_data)
+			if alert is None:
+				return log_error('SalusClient: _run_zone_alert: can create Alert instance')	
+			
+			new_data['alerts'][id] = alert.test_client(self)
+		
 
 		// save new data
-		{
-			if(!$this->_save_json_config('alerts.data',$new_data))
-			{
-				log_eror('SalusClient: run_alerts: can not save new data');
-				return false;
-			}	
-		}
-
-		return true;
-	}
-
-	// Load client, devices and zones date stored locally
-	public function load()
-	{		
-		// READ AUTH CONFIG
-		$auth_config = $this->_load_json_config('auth.conf');
-		if($auth_config===false){
-			log_error('SalusClient: load: can not load auth config');
-			return false;
-		}
-		$this->login_email = $auth_config->email;
-		$this->login_password = $auth_config->key;
+		if !self._save_json_config('alerts.data',new_data):			
+			return log_error('SalusClient: run_alerts: can not save new data')
 		
+		return True
+	
 
-		// READ MAIN CONFIG
-		$config = $this->_load_json_config('client.conf');
-		if($config===false){
-			log_error('SalusClient: load: can not load config');
-			return false;
-		}
-		$this->config = $config;
-		$this->alert_email = $config->client->alert_email;
-		$this->name = $config->client->name;
+	## Load client, devices and zones date stored locally
+	def load(self):
+		
+		## READ AUTH CONFIG
+		auth_config = self._load_json_config('auth.conf')
+		if auth_config is None:
+			return log_error('SalusClient: load: can not load auth config')
+			
+		self.login_email = auth_config.email;
+		self.login_password = auth_config.key;
 
+		## READ MAIN CONFIG
+		config = self._load_json_config('client.conf')
+		if config is None:
+			return log_error('SalusClient: load: can not load config')
 
+		self.config = config
+		self.alert_email = config.client.alert_email
+		self.name = config.client.name
 
-		// read existing data
-		$this->devices = array();
-		$data = $this->_load_json_config('client.data',false,true);
-		if($data){
-			$this->data_updated_time = $data->time;
-			foreach($data->devices as $device_data){
-				$device = new SalusDevice($this); 
-				$device->load($device_data);
-				array_push($this->devices,$device);
-			}
-		}
-		log_debug('SalusClient: load: completed');
-		return true;
-	}
+		## read existing data
+		self.devices = []
+		data = self._load_json_config('client.data',False,True)
+		if data is not None:
+			self.data_updated_time = data.time
+			for device_data in data.devices:
+				device = SalusDevice(self) 
+				device.load(device_data)
+				self.devices.append(device)
 
-
-	function register()
-	{
-		global $app;
-
-		// check client older for existing
-		$path = $this->get_folder_path();
-		if(!file_exists($path)){
-			if(!mkdir($path)){
-				log_error('SalusClient: register: can not create client folder "'.$path.'"');
-				return false;
-			}
-			$history_path = $path.'/history';
-			if(!mkdir($history_path)){
-				log_error('SalusClient: register: can not create client history folder "'.$history_path.'"');
-				return false;
-			}
-		}		
-
-		// init default config
-		$this->config = array(
-			'client'=>array(
-				'name'=>$this->name,
-				'alert_email'=>$this->login_email
-			),
-			'alerts'=>$app->config->default_alerts			
-		);
+		return log_debug('SalusClient: load: completed')
 
 
-		$this->save_config();
-		$this->save_auth();
-		$this->save_data();
+	def register(self):
+		## check client older for existing
+		path = self.get_folder_path()
 
-		return true;
-	}
+		if not os.path.exists(path):
+			try:
+				os.mkdir(path)
+			except OSError as exc: 
+				return log_error('SalusClient: register: can not create client folder "'+path+'"')				
 
-	function save_updated(){
-//		if(!$this->save_history()) return false;
-//		if(!$this->run_alerts()) return false;
-		if(!$this->save_data()) return false;
-
-		return true;
-	}
-
-	function save_auth()
-	{
-		$data = array(
-			'email'=>$this->login_email,
-			'key'=>$this->login_password
-		);	
-
-		if(!$this->_save_json_config('auth.conf',$data)) return log_error('SalusClient: save_auth: can not save client auth');
-		return true;
-	}
-
-	function save_config()
-	{
-
-		if(!$this->_save_json_config('client.conf',$this->config)) return log_error('SalusClient: save_config: failed');
-		return true;
-	}
-
-
-	function save_data()
-	{	
-		$data = $this->get_data_for_save();
-		if(!$this->_save_json_config('client.data',$data)) return log_eror('SalusClient: save: can not save client data');
-		$this->data_updated_time = $data['time'];
+			history_path = path + '/history'
+			try:
+				os.mkdir(history_path)
+			except OSError as exc: 
+				return log_error('SalusClient: register: can not create client history folder "'+history_path+'"')
 				
-		return true;
-	}
+		## init default config
+		self.config = {
+			'client':{
+				'name':self.name,
+				'alert_email':self.login_email
+			},
+			'alerts':app.config.default_alerts
+		}
+
+		self.save_config()
+		self.save_auth()
+		self.save_data()
+
+		return True
+	
 
 
-	function get_data_for_save()
-	{
-		return array(
-			'time'=>time(),
-			'date'=>date("Y M d H:i:s"),
-			'devices'=>array_map(
-				function($device){
-					return $device->get_data_for_save();
-				}
-				,$this->devices
-			)
-		);
-	}
+	def save_updated(self):
+##		if !self.save_history()) return False;
+##		if !self.run_alerts()) return False;
+		if not self.save_data():
+		 return False
+
+		return True
+	
+	def save_auth(self):
+	
+		data = {
+			'email':self.login_email,
+			'key':self.login_password
+		}
+
+		if no self._save_json_config('auth.conf',data):
+			return log_error('SalusClient: save_auth: can not save client auth')
+		
+		return True
+	
+
+	def save_config(self):	
+		if not self._save_json_config('client.conf',self.config):
+		 return log_error('SalusClient: save_config: failed')
+		return True	
+
+
+	def save_data(self):
+
+		data = self.get_data_for_save()
+		if not self._save_json_config('client.data',data):
+			return log_eror('SalusClient: save: can not save client data')
+		
+		self.data_updated_time = data['time'];
+				
+		return True
+	
+
+	def get_data_for_save(self)	
+		return {
+			'time':time(),
+			'date':datetime.now().strftime('%y %m %d %H:%M:%S'),
+			'devices':list(map(lambda device: device.get_data_for_save() ,self.devices))
+		}	
 
 	def save_history(self):
 		return SalusHistoryHelper.save_client_history(self)
 	
 
+	def get_folder_path(self):
+		return app.clients_folder()+'/'+self.id;
 
-	function get_folder_path()
-	{
-		global $app;
-		return $app->clients_folder().'/'.$this->id;
-	}
 
-	function get_device_by_id($id){
-		foreach($this->devices as $dev){
-			if($dev->id===$id) return $dev;
-		}
-		return false;
-	}
-
-	function get_zone_by_id($id){
-		foreach($this->devices as $dev)
-			foreach($dev->zones as $zone) if($zone->id==$id) return $zone;
+	def get_device_by_id(self,id):
+		for dev in self.devices:
+			if dev.id==id:
+			 return dev
 		
-		return false;
-	}
+		return None
+	
+	def get_zone_by_id(self,id):
+		dev = self.get_device_by_id(id)
+		if dev is None:
+			return None
 
+		for zone in dev.zones:
+			if zone.id==id:
+				return zone
+		
+		return None
+	
 
 	//////////////////////////////////////////////////////////// PRIVATE FUNCTIONS //////////////////////////////////////
 
 	
-	private function _set_login($email,$password)
-	{
-		// cleanup arguments
-		$email = htmlspecialchars(ltrim(rtrim($email)));
-		$password = htmlspecialchars(ltrim(rtrim($password)));
+	def _set_login(self,email,password):
 
-		if(!filter_var($email, FILTER_VALIDATE_EMAIL)) return false;
-		if(strlen($password)==0) return false;
+		## cleanup arguments
+		email = cgi.escape(email.strip(),True)
+		password = gi.escape(password.strip(),True)
 
-		// store
-		$this->login_email = $email;
-		$this->login_password = $password;
+		if '@' not in parseaddr(email)[1]:
+			return False
 
-		return true;
-	}
+		if password=='':
+			return False
 
-	private function _set_name($name)
-	{
-		// cleanup arguments
-		$name = ltrim(rtrim($name));
+		## save
+		self.login_email = email
+		self.login_password = password;
+
+		return True
+
+	def _set_name(self,name):
+
+		## cleanup arguments
+		name = name.strip()
 		
-		if(strlen($name)==0) return false;
-
-		// store
-		$this->name = $name;
+		if name=='':
+			return False
 		
-		return true;
-	}
+		self.name = name
+		
+		return True
+	
 
-
-	///////////////////////////////////////////// SAVE/LOAD CONFIGS ///////////////////////////////////////////////////////
+	##///////////////////////////////////////////// SAVE/LOAD CONFIGS ///////////////////////////////////////////////////////
 
 	
 
- 	private function _load_json_config($file_name,$assoc=false,$ignore_missing=false)
-	{
-		$path = $this->get_folder_path().'/'.$file_name;
-		if(!file_exists($path)){
-			if($ignore_missing)
-				return $assoc?array():new stdClass();
-			else
-				return log_error('SalusClient: _load_json_config: can not find file "'.$path.'"');
-		}
-		return load_json_config($path,$assoc);
-	}
+ 	def _load_json_config(self, file_name, ignore_missing=False)
 
-	private function _save_json_config($file_name,$config)
-	{
-		$path = $this->get_folder_path().'/'.$file_name;
-		$content = json_encode($config,JSON_PRETTY_PRINT);
-
-		if($content===false){
-			log_error('SalusClient: _save_json_config: can not encode config "'.$file_name.'" Error: '.json_last_error_msg());
-			return false;
-		}		
-
-		if(!file_put_contents($path,$content)){
-			log_error('SalusClient: _save_json_config: can not save config "'.$path.'"');
-			return false;
-		}		
-		return true;
-
-	}
-
-
-	///////////////////////////////////////////// COMMUNICATION WITH SITE ///////////////////////////////////////////////////////
-
-
-	// result: 
-	//		true or false
-	function login_to_site()
-	{
-		global $app;
-
-		if( !$app->salus->is_real_mode() ){
-			return true;
-		}
-
-		// GET FIRST COOKIE
-		$data = array (
-			'lang'=>'en'
-		);
-		req = net_http_request( SalusConnect::START_URL,SalusConnect::START_URL, $data,'GET', $this->PHPSESSID );	
-
-		{
-			$this->PHPSESSID = strval(req.cookies['PHPSESSID']);
-			log_debug('login_to_site: PHPSESSID="'.$this->PHPSESSID.'"');
-		}
-
-		// TRY LOGIN
-		{
-			/* SETUP CONTEXT */
-			$data = array (
-				'IDemail' => $this->login_email,
-				'password' => $this->login_password,
-				'lang'=>'en',
-				'login' => 'Login'
-			);
-
-
-			$result = net_http_request( SalusConnect::LOGIN_URL,SalusConnect::LOGIN_URL, $data,'POST', $this->PHPSESSID);
-			if($result===false){
-				return log_error('SalusClient: login_to_site: failed to get "'.SalusConnect::LOGIN_URL.'"');
-			}
-
-			return $result;
-		}
-
-	}
-
-
-	// result: 
-	//		true or false
-	private function _update_device_list_from_site()
-	{
-		global $app;
-		log_debug('SalusClient: _update_devices_from_site : started');
-
-		$result = $this->login_to_site();
-		if($result===false){
-			log_error('SalusClient: _update_devices_from_site : failed  - can not ping');
-			return false;
-		}
-
-		$devices_html = '';
-
-		if($app->salus->is_real_mode()){
-			// STORE DEVICES CONTENT
-			log_debug('SalusClient: _update_devices_from_site : loaded real data from site');
-			
-			$devices_html = $result['content'];
-			file_put_contents($app->home_path().'/local/output/devices.html',$devices_html);
-		}elseif($app->salus->is_emul_mode()){
-			log_debug('SalusClient: _update_devices_from_site : load faked data from local file');
-
-			$devices_html = emul_load_devices();
-		}else{
-			return log_error('salus_login: unknown app mode='.$app->salus->mode());
-		}	
-
-		$this->_parse_html_devices($devices_html);	
-
-		return true;
-	}
-
-
-
-	// args
-	//		devices_html: string
-	// return: true=success or false=failed
-	private function _parse_html_devices(&$devices_html)
-	{
-		$log_d = function($message){
-			log_debug('SalusClient: _parse_html_devices(): '.$message);
-		};
-
-		$log_d('starting...');
-		$dom = new DOMDocument;
-		libxml_use_internal_errors(true);
-		if(!$dom->loadHTML($devices_html,LIBXML_NOWARNING)) return log_error('salus_parse_devices(): Can not parse devices from HTML');
+		path = self.get_folder_path()+'/'+file_name;
+		if not os.path.exists(path):
+			if ignore_missing:
+				return {}
+			else:
+				log_error('SalusClient: _load_json_config: can not find file "'+path+'"')
+				return None
 		
-		libxml_clear_errors();
+		return load_json_config(path,assoc)
+	
+	def _save_json_config(self,file_name,config):
+	
+		path = self.get_folder_path()+'/'+file_name
+
+		if not save_json_config(path,config):
+			return log_error('SalusClient: _save_json_config: can not save config "'+file_name)
+	
+		return True
 
 
-		$xpath = new DOMXpath($dom);
+	##///////////////////////////////////////////// COMMUNICATION WITH SITE ///////////////////////////////////////////////////////
+
+
+	## result: 
+	##		True or False
+	def login_to_site(self):
+	
+		if not app.salus.is_real_mode():
+			return True
+	
+
+		## GET FIRST COOKIE
+		data = array (
+			'lang':'en'
+		)
+		req = net_http_request( SalusConnect.START_URL,SalusConnect.START_URL, data,'GET' )	
+	
+		self.PHPSESSID = req.cookies['PHPSESSID'] if 'PHPSESSID' in req.cookies else ''
+		log_debug('login_to_site: PHPSESSID="'+self.PHPSESSID+'"')	
+
+		## TRY LOGIN
+		## SETUP CONTEXT 
+		data = {
+			'IDemail': self.login_email,
+			'password': self.login_password,
+			'lang': 'en',
+			'login': 'Login'
+		}
+
+
+		result = net_http_request( SalusConnect.LOGIN_URL,SalusConnect.LOGIN_URL, data,'POST', self.PHPSESSID)
+		if result is None:
+			return log_error('SalusClient: login_to_site: failed to get "'+SalusConnect.LOGIN_URL+'"')
+
+		return True
+
+
+	## result: 
+	##		True or False
+	def _update_device_list_from_site(self):
+			
+		log_debug('SalusClient: _update_devices_from_site : started')
+
+		if not self.login_to_site():
+			return log_error('SalusClient: _update_devices_from_site : failed  - can not ping')
+
+		devices_html = '';
+
+		if app.salus.is_real_mode():
+			log_debug('SalusClient: _update_devices_from_site : loaded real data from site')			
+			devices_html = result['text'];
+			with open(app.home_path()+'/local/output/devices.html', 'w') as f:
+    			f.write(devices_html)
+		elif app.salus.is_emul_mode():
+			log_debug('SalusClient: _update_devices_from_site : load faked data from local file')
+			devices_html = salus-emul.emul_load_devices()
+		else:
+			return log_error('salus_login: unknown app mode='+app.salus.mode())
+		
+		return self._parse_html_devices(devices_html)	
+
+
+	## args
+	##		devices_html: string
+	## return: True=success or False=failed
+	def _parse_html_devices(self,devices_html)
+	
+		log_d = lambda message:  log_debug('SalusClient: _parse_html_devices(): '+message) 
+
+		log_d('starting...')
+		dom = new DOMDocument;
+		libxml_use_internal_errors(True)
+		if !dom.loadHTML(devices_html,LIBXML_NOWARNING)) return log_error('salus_parse_devices(): Can not parse devices from HTML')
+		
+		libxml_clear_errors()
+
+
+		xpath = new DOMXpath(dom)
 
 		// search for <input name="devId" type="hidden" value="70181"/>
-		$inputs_nodes = $xpath->query("//input[@name='devId']");
+		inputs_nodes = xpath.query("//input[@name='devId']")
 
-		if (is_null($inputs_nodes)) return log_error('salus_parse_devices: Can not find device definition in HTML');
+		if (is_null(inputs_nodes)) return log_error('salus_parse_devices: Can not find device definition in HTML')
 
 
 		// ADD FOUND DEVICES
-		foreach ($inputs_nodes as $input_node)
+		foreach (inputs_nodes as input_node)
 		{
 			// GET ID	
-			$id = get_node_attr_value($input_node,'value');		
-			$log_d('id='.$id);		
-			if($id === false) return log_error('salus_parse_devices: Can not ID atrribute in node definition');
+			id = get_node_attr_value(input_node,'value')		
+			log_d('id='.id)		
+			if id === False) return log_error('salus_parse_devices: Can not ID atrribute in node definition')
 
 			// TRY TO FIND ALREADY EXISTING DEVICE
-			$existing_dev = $this->get_device_by_id($id);
-			$dev = $existing_dev;
+			existing_dev = self.get_device_by_id(id)
+			dev = existing_dev;
 
-			if(!$dev){
-				$dev = new SalusDevice($this,$id);
+			if !dev):
+				dev = new SalusDevice(this,id)
 			}
 
-			if(!$dev->init_from_dom($xpath,$input_node)) return log_error('salus_parse_devices: can not load device');
+			if !dev.init_from_dom(xpath,input_node)) return log_error('salus_parse_devices: can not load device')
 
 			// STORE NEW DEVICE
-			if(!$existing_dev) array_push($this->devices,$dev);
+			if !existing_dev) array_push(self.devices,dev)
 		}
 		
-		$log_d('done');		
+		log_d('done')		
 	}
 
-	private function _load_devices_from_site()
+	private def _load_devices_from_site()
 	{
-		foreach($this->devices as $dev) {
-			if(!$dev->load_from_site()){
-				log_error('SalusClient: load_devices: can not load device #'.$dev->id);
-				return false;
+		foreach(self.devices as dev) {
+			if !dev.load_from_site()):
+				log_error('SalusClient: load_devices: can not load device #'.dev.id)
+				return False;
 			}			
 		}
 
-		return true;
+		return True
 	}
 
 }
