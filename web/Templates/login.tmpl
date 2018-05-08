@@ -1,7 +1,10 @@
 <!doctype html>
+<%!
+  from utils import locstr,date_str,temp_to_str
+%>
 <html lang="en">
   <head>
-    <title><?php echo $sys_name?></title>
+    <title>${sys_name}</title>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -14,22 +17,24 @@
     <!-- Page content  -->
     <div class="container">
       <div>
-        <h3><?php echo $msg_header?></h3>
+        <h3>${msg_header}</h3>
       </div>
 
-      <div class="alert alert-danger" role="alert" <?php echo $error_msg==''?'style="display:none"' : ''?> >
-        <?php echo $error_msg?>
-      </div>
+       % if error_msg!='':
+        <div class="alert alert-danger" role="alert" style="display:none" >
+            ${error_msg}
+          </div>
+       % endif
       
         <form method="post" action="?page=login">          
           <div class="form-group">
-            <input type="email" name="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="<?php echo locstr('Email')?>"
-              value="<?php echo $email?>">
+            <input type="email" name="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="${locstr('Email')}"
+              value="${email}">
           </div>
           <div class="form-group">
-            <input type="password" name="password" class="form-control" id="exampleInputPassword1" placeholder="<?php echo locstr('Password')?>">
+            <input type="password" name="password" class="form-control" id="exampleInputPassword1" placeholder="${locstr('Password')}">
           </div>
-          <button type="submit" class="btn btn-primary" name="login" value="login"><?php echo locstr('Log In')?></button>
+          <button type="submit" class="btn btn-primary" name="login" value="login">${locstr('Log In')}></button>
         </form>
       
     </div> <!-- /container -->

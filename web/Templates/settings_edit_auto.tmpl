@@ -1,18 +1,23 @@
-<?php echo $layout_top?>
+<%!
+  from utils import locstr,date_str,temp_to_str
+%>
+${layout_top}
 
-<h2><?php echo locstr('Automatic Update/Settings')?></h2>
+<h2>${locstr('Automatic Update/Settings')}</h2>
 
- <div class="alert alert-danger" role="alert" <?php echo $error_msg==''?'style="display:none"' : ''?> >
-    <?php echo $error_msg?>
+ % if error_msg!='':
+<div class="alert alert-danger" role="alert" style="display:none" >
+    ${error_msg}
   </div>
-
-<form method="post" action="<?php echo $form_url?>">          
+% endif
+ 
+<form method="post" action="${form_url}">          
   <div class="form-group">
-    <label for="device_name"><?php echo locstr("Period(secs)")?></label>
-    <input name="auto_update" class="form-control" id="auto_update" value="<?php echo $auto_update?>">
+    <label for="device_name">${locstr("Period(secs)")}</label>
+    <input name="auto_update" class="form-control" id="auto_update" value="${auto_update}">
   </div>
-  <button type="submit" class="btn btn-primary" name="save" value="save"><?php echo locstr('Save')?></button>
-  <button class="btn btn-secondary" name="cancel" value="cancel"><?php echo locstr('Cancel')?></button>
+  <button type="submit" class="btn btn-primary" name="save" value="save">${locstr('Save')}</button>
+  <button class="btn btn-secondary" name="cancel" value="cancel">${locstr('Cancel')}</button>
 </form>
 
-<?php echo $layout_bottom?> 
+${layout_bottom}

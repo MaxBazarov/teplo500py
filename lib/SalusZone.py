@@ -73,7 +73,7 @@ class SalusZone:
 	
 	def get_data_for_save(self):
 
-		$data = {
+		data = {
 			'id':self.id,
 			'index':self.index,
 			'updated':self.updated,
@@ -104,7 +104,7 @@ class SalusZone:
 
 		zone_div_node = parent_node.findall('div[@class="TabbedPanelsContent"]')[index-1]
 		if zone_div_node is None:
-			return log_e('can not find TabbedPanelsContent #'+($index-1))
+			return log_e('can not find TabbedPanelsContent #'+(index-1))
 		
 		log_d('load zone #'+index)
 

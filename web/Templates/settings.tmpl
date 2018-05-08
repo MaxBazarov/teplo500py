@@ -1,11 +1,14 @@
-<?php echo $layout_top?>
+<%!
+  from utils import locstr,date_str,temp_to_str
+%>
+${layout_top}
 
-	<h5><?php echo locstr("Automatic Update/Settings")?></h5>
+	<h5>${locstr("Automatic Update/Settings")}</h5>
       <div>
           <div>
-            <?php echo locstr("Interval: {1}",$client->get_auto_update_txt())?>
+            ${locstr("Interval: {1}",client.get_auto_update_txt())}
         </div>
-          <a class="btn btn-secondary btn-sm" href="<?php echo $sys_settings_link?>&cmd=edit_auto" role="button"><?php echo locstr("Change/Settings")?></a>
+          <a class="btn btn-secondary btn-sm" href="${sys_settings_link}&cmd=edit_auto" role="button">${locstr("Change/Settings")}</a>
       </div>
 
-<?php echo $layout_bottom?> 
+${layout_bottom}

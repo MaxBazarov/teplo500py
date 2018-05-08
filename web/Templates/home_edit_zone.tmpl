@@ -1,18 +1,24 @@
-<?php echo $layout_top?>
+<%!
+  from utils import locstr,date_str
+%>
 
-<h2><?php echo locstr('Edit Zone')?></h2>
+${layout_top}
 
- <div class="alert alert-danger" role="alert" <?php echo $error_msg==''?'style="display:none"' : ''?> >
-    <?php echo $error_msg?>
-  </div>
+<h2>${locstr('Edit Zone')}</h2>
 
-<form method="post" action="<?php echo $form_url?>">          
+ % if error_msg!='':
+ 	<div class="alert alert-danger" role="alert" style="display:none" >
+    	${error_msg}
+  	</div>
+ % endif
+
+<form method="post" action="${form_url}">          
   <div class="form-group">
-    <label for="zone_name"><?php echo locstr("Name")?></label>
-    <input name="name" class="form-control" id="zone_name" value="<?php echo $name?>">
+    <label for="zone_name">${locstr("Name")}></label>
+    <input name="name" class="form-control" id="zone_name" value="${name}>">
   </div>
-  <button type="submit" class="btn btn-primary" name="save" value="save"><?php echo locstr('Save')?></button>
-  <button class="btn btn-secondary" name="cancel" value="cancel"><?php echo locstr('Cancel')?></button>
+  <button type="submit" class="btn btn-primary" name="save" value="save">${locstr('Save')}</button>
+  <button class="btn btn-secondary" name="cancel" value="cancel">${locstr('Cancel')}</button>
 </form>
 
-<?php echo $layout_bottom?> 
+${layout_bottom}

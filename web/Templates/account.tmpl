@@ -1,10 +1,13 @@
-<?php echo $layout_top?>
+<%!
+	from utils import locstr
+%>
+${layout_top}
 
       <div>
           <div>
-            <?php echo $logged_as?>
+            ${logged_as}
         </div>
-          <a class="btn btn-secondary btn-sm" href="<?php echo $sys_logout_link?>" role="button"><?php echo locstr("Sign Out")?></a>
+          <a class="btn btn-secondary btn-sm" href="${sys_logout_link}>" role="button">${locstr("Sign Out")}></a>
       </div>
 
-<?php echo $layout_bottom?> 
+${layout_bottom}

@@ -1,20 +1,24 @@
-<?php echo $layout_top?>
+<%!
+  from utils import locstr,date_str
+%>
 
-<h2><?php echo locstr('Set Temperature')?></h2>
+<h2>${locstr('Set Temperature')}</h2>
 
- <div class="alert alert-danger" role="alert" <?php echo $error_msg==''?'style="display:none"' : ''?> >
-    <?php echo $error_msg?>
-  </div>
+  % if error_msg!='':
+ 	<div class="alert alert-danger" role="alert" style="display:none" >
+    	${error_msg}
+  	</div>
+ % endif
 
-<form method="post" action="<?php echo $form_url?>">          
+<form method="post" action="${form_url}">          
   <div class="form-group">
-    <label for="man_temp" id="man_temp_label"><?php echo locstr("Set Manually")?></label>
+    <label for="man_temp" id="man_temp_label">${locstr("Set Manually")}</label>
 
     <div class="row">
 
 		<div class="input-group col-8 bz-spinner">
 	   	  <input type="text" class="form-control" id="man_temp"  name="man_temp"	   	 
-	   	  	value="<?php echo $man_temp?>" org-value="<?php echo $man_temp?>" 
+	   	  	value="${man_temp}" org-value="${man_temp}" 
 	   	  	aria-describedby="man_temp_label"
 	   	  />	   			
 
@@ -56,8 +60,8 @@
 
 
   </div>
-  <button type="submit" class="btn btn-primary" name="save" value="save"><?php echo locstr('Save')?></button>
-  <button class="btn btn-secondary" name="cancel" value="cancel"><?php echo locstr('Cancel')?></button>
+  <button type="submit" class="btn btn-primary" name="save" value="save">${locstr('Save')}</button>
+  <button class="btn btn-secondary" name="cancel" value="cancel">${locstr('Cancel')}</button>
 </form>
 
-<?php echo $layout_bottom?> 
+${layout_bottom}

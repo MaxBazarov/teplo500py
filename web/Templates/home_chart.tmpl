@@ -1,3 +1,6 @@
+<%!
+    from utils import locstr,date_str
+%>
 <div style="width:90%;" >
         <canvas id="canvas" class="chartjs-render-monitor" style="height:300px"></canvas>
     </div>    
@@ -7,12 +10,12 @@
     </div>
     <script>     
         function load_date(date){            
-            request.open('GET', '<?php echo $sys_baseurl?>/index.php?rest_page=client&cmd=get_chart_data&date='+date, true);
+            request.open('GET', '${sys_baseurl}/index.php?rest_page=client&cmd=get_chart_data&date='+date, true);
             request.send(null);
         }
         var config = {
             type: 'line',
-            date: '<?php echo date_str($date)?>',
+            date: '${date_str(date)}',
             data: {
             },
             options: {
@@ -23,7 +26,7 @@
                 },
                 title:{
                     display:true,
-                    text:'<?php echo locstr("Temperature values for {1}/chart",date_str($date))?>',
+                    text:'${locstr("Temperature values for {1}/chart",date_str(date))}',
                 },
                 tooltips: {
                     mode: 'index',

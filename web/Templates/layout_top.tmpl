@@ -1,7 +1,10 @@
 <!doctype html>
+<%!
+  from utils import locstr,date_str,temp_to_str
+%>
 <html lang="en">
   <head>
-    <title><?php echo $sys_name?></title>
+    <title>${sys_name}</title>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -11,10 +14,10 @@
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 
 
-    <?php echo $sys_head_custom?>
+    ${sys_head_custom}
   </head>
   <body>   
-    <?php echo $sys_body_custom?>
+    ${sys_body_custom}
 
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://getbootstrap.com/assets/js/vendor/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>    
@@ -31,13 +34,13 @@
       <div>
 		<ul class="nav nav-tabs">
 		  <li class="nav-item">
-		    <a class="nav-link <?php echo $menu_home_active?>" href="<?php echo $sys_home_link?>"><?php echo locstr('Home')?></a>
+		    <a class="nav-link ${menu_home_active}" href="${sys_home_link}">${locstr('Home')}></a>
 		  </li>
 		  <li class="nav-item">
-		    <a class="nav-link <?php echo $menu_settings_active?>" href="<?php echo $sys_settings_link?>"><?php echo locstr('Settings')?></a>
+		    <a class="nav-link ${menu_settings_active}" href="${sys_settings_link}">${locstr('Settings')}></a>
 		  </li>
 		  <li class="nav-item">
-		    <a class="nav-link <?php echo $menu_account_active?>" href="<?php echo $sys_account_link?>"><?php echo locstr('Account')?></a>
+		    <a class="nav-link ${menu_account_active}" href="${sys_account_link}">${locstr('Account')}></a>
 		  </li>
 		</ul>
 </div>
