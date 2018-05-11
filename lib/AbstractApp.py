@@ -20,8 +20,8 @@ class AbstractApp:
 		
 		## load system config
 		config = load_json_config('../local/system.conf')
-		if $config is None:
-		   return false
+		if config is None:
+		   return False		   
 		self.config = config
 
 		self.lang = config['defaults']['lang']

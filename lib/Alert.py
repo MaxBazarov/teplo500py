@@ -1,5 +1,7 @@
-from utils.py import *
+from utils import *
 from datetime import date
+
+import Emailer
 
 class AbstractAlert:
 
@@ -54,48 +56,33 @@ class LowTempAlert(AbstractAlert):
 			if now < end_time:
 				log_debug('LowTempAlert: test_client_zone: skip alert because need wait for additional '+(end_time-now).' secs')
 				self.exec_time = last_time
-				return  False
+				return False
 		
 		self.exec_time = now
-
 		
-		log_debug('LowTempAlert: test_client_zone: run alert because alert temp='.$conf->temp.'  cond='.($zone->current_temp > $conf->temp));
-		// current temp is equal or lower than alert temperatur
+		log_debug('LowTempAlert: test_client_zone: run alert because alert temp='+conf['temp']+'  cond='+(zone.current_temp > conf['temp']))
+		## current temp is equal or lower than alert temperatur
 
-		$template = new EmailTemplate('low_temp');
-		$template->client_name= $client->name;
-	    $template->current_temp = temp_to_str($zone->current_temp);
-	    $template->zone_name = $zone->name;
+		template =  Emaler.EmailTemplate('low_temp')
+		template.client_name= client.name
+	    template.current_temp = temp_to_str(zone.current_temp)
+	    template.zone_name = zone.name
 
-	    $emailer = new Emailer($client->alert_email);
-		$emailer->set_template($template);
-		if(!$emailer->send()){
-			log_error('LowTempAlert: test_client_zone: can not send email');
-		}
-		return true;
-	}
-}
+	    emailer = Emailer.Emailer(client.alert_email)
+		emailer.set_template(template)
+		if not $emailer.send():
+			log_error('LowTempAlert: test_client_zone: can not send email')
+		
+		return True
+	
+ALERT_IDS = ['low_temp']
 
+def CreateAlert(id, alert_config, alert_data):
 
-class AlertFactory
-{
-	const ALERT_IDS = array('low_temp');
+	if id == 'low_temp':
+		return LowTempAlert(id, alert_config, alert_data)
+	else:
+		log_error('AlertFactory: CreateAlert: uknown alert id"'+alert_config['id']+'"')
+		return None		
 
-	static function CreateAlert($id,$alert_config,$alert_data)
-	{
-		$alert=null;
-		switch($id){
-			case "low_temp":
-				$alert = new LowTempAlert($id,$alert_config,$alert_data);
-				break;
-			defaults:	
-				log_error('AlertFactory: CreateAlert: uknown alert id"'.$alert_config->id.'"');			
-				return None
-		}
-
-		return $alert;
-
-	}
-}
-
-?>
+	
