@@ -1,80 +1,82 @@
-<?php
+import urllib.parse as urlparse
+import cgi
+import os.path
 
-include 'web_utils.php';
-include 'AbstractApp.php';
-include 'AbstractPage.php';
-include 'AbstractREST.php';
-include 'WebLoginHelper.php';
-include 'SalusConnect.php';
 
-class WebApp extends AbstractApp
-{
-	const ORG_SITE = 'https://teplo500.ru';
+from web_utils import *
+import AbstractApp
+import AbstractPage
+import AbstractREST
+import WebLoginHelper
+import SalusConnect
 
-	const LOGIN_SUBURL = '/index.php?page=login';
-	const LOGOUT_SUBURL = '/index.php?page=logout';
-	const HOME_SUBURL = '/index.php?page=home';
-	const SETTINGS_SUBURL = '/index.php?page=settings';
-	const ACCOUNT_SUBURL = '/index.php?page=account';
+CONSTS = {
+	'ORG_SITE' : 'https://teplo500.ru'
+	'LOGIN_SUBURL' : '/index.php?page=login'
+	'LOGOUT_SUBURL' : '/index.php?page=logout'
+	'HOME_SUBURL' : '/index.php?page=home'
+	'SETTINGS_SUBURL' : '/index.php?page=settings'
+	'ACCOUNT_SUBURL' : '/index.php?page=account'
+}
+	
 
-	public $client = null;
-	public $login_helper = null;
-	public $rest_page = null;
+class WebApp(AbstractApp):
 
-	private $client_id = '';  
-	private $page = '';	
 
-	function __construct(){
-		parent::__construct();
-		//session_start();		
-	}
+	def __init__(self):
+		super().__init__(self)
 
-	function init(){
-		if( !parent::init() )  return false;
+		self.client = None
+		self.login_helper = None
+		self.rest_page = None
 
-		// check files
-		$messages_path = $this->_messages_log_path();
-		if(!file_exists($messages_path)){
-			$file = fopen($messages_path,'x');	
-			if(!$file){
-				return log_error('Webapp: init: can not create '.$messages_path);
-			}
-			fclose($file);
-		}
+		self.client_id = ''
+		self.page = ''
 
-		// prepare login cookie management helper
-		$this->login_helper = WebLoginHelper::Factory_Create();	
-		if(!$this->login_helper) return log_error('WebApp: init(): can not create login helper');
-		$client_id = $this->login_helper->try_login();
-		if($client_id!==false){			
-   			$this->client = SalusClient::Factory_CreateAndLoad($client_id);
-   			if($this->client) $this->client_id = $client_id;
-		}
+		self.url = '' ## TODO: initialise URL
+		self.get_params = urlparse.parse_qs(urlparse.urlparse(self.url).query)
+		self.form = cgi.FieldStorage()
+	
+	def init(self):
+		if not super().init(self):
+			return False
 
-		// switch salus mode
-		$this->salus->set_mode($this->config->web->salus_mode=='real'?SalusConnect::MODE_REAL:SalusConnect::MODE_EMUL);		
+		## check files
+		messages_path = self._messages_log_path()
+
+		## create messages log file if it doesn't exist
+		if not os.path.isfile(messages_path):
+			try:
+				with open(messages_path, 'w') as fp:
+		
+		
+		## prepare login cookie management helper
+		self.login_helper = WebLoginHelper.Create()
+		if not self.login_helper:
+			return log_error('WebApp: init(): can not create login helper')
+
+		client_id = self.login_helper.try_login()
+		if client_id!=''
+   			self.client = SalusClient.CreateAndLoad(client_id)
+   			if self.client:
+   				$self->client_id = client_id
+		
+		## switch salus mode
+		self.salus.set_mode(self.config['web']['salus_mode']=='real'?SalusConnect.MODE_REAL:SalusConnect.MODE_EMUL);		
 			
-		return true;
-	}
+		return True
 
+	def get_client_id(self):
+		return self.client_id
 
-	function get_client_id(){
-		return $this->client_id;
-	}
-
-	function __destruct() {
-       parent::__destruct();       
-       //session_commit();
-   }
-
-
-   function save_login($client_id){    		
-   		if($client_id==='') return false;
-		$this->client_id = $client_id;
-   		$this->client = SalusClient::Factory_CreateAndLoad($this->client_id);
-   		$this->login_helper->save_login($client_id);   		
-   		return true;
-   	}
+	def save_login(self,client_id):
+   		if client_id=='':
+   			return False
+		self.client_id = client_id
+   		self.client = SalusClient.CreateAndLoad(self.client_id);
+   		self.login_helper.save_login(client_id)
+   		return True
+   	
 
    	function save_logout(){    		
    		$this->login_helper->logout();   		

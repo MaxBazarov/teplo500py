@@ -56,7 +56,7 @@ class Emailer:
         body = self.template.compile_body()
 
         ## SEND REAL EMAIL USING GMAIL
-        gmail = $app->config['gmail']
+        gmail = app.config['gmail']
         if gmail['enabled']:
             ## TODO: link to some emailer
             ## gmail['auth_name']            

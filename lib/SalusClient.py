@@ -18,7 +18,7 @@ import salus-emul
 ## result
 ##  ref to SalusClient or False
 
-def Factory_CreateAndLoad(client_id):
+def CreateAndLoad(client_id):
 
 	log_debug('Factory_CreateAndLoad: creating client '+client_id+'...')
 
@@ -45,7 +45,7 @@ def Factory_CreateAndLoad(client_id):
 ## result
 ##  ref to SalusClient or False
 
-def Factory_CreateAndRegister(name,email,password):
+def CreateAndRegister(name,email,password):
 	log_debug('Factory_CreateAndRegister: creating client')
 
 	client = SalusClient(email)
@@ -71,7 +71,7 @@ def Factory_CreateAndRegister(name,email,password):
 class SalusClient:
 
 	def __init__(self,id):   
-    	id = cgi.espace(id.strip(),True)
+    	id = cgi.escape(id.strip(),True)
     	
     	# PUBLIC
     	self.id = id
@@ -343,7 +343,7 @@ class SalusClient:
 
 		## cleanup arguments
 		email = cgi.escape(email.strip(),True)
-		password = gi.escape(password.strip(),True)
+		password = cgi.escape(password.strip(),True)
 
 		if '@' not in parseaddr(email)[1]:
 			return False

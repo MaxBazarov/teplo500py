@@ -1,18 +1,20 @@
 <?php
 
 
-class WebLoginHelper
-{
-	private $login_id = '';
-
-	// return WebLoginHelper instance or false(error) 
-	static function Factory_Create(){
+// return WebLoginHelper instance or false(error) 
+	static function Create(){
 		$helper = new WebLoginHelper();
 		if(!$helper->init()){
 			return log_error('WebLoginHelper::Factory_Create() can not init helper');
 		}
 		return $helper;
 	}
+	
+class WebLoginHelper
+{
+	private $login_id = '';
+
+	
 
 	function __construct(){
 	}
