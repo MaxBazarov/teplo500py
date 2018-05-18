@@ -137,7 +137,7 @@ class SalusClient:
 	def get_auto_update(self):		
 		if 'auto_update' in self.config:
 			return self.config.auto_update
-		else
+		else:
 			return app.config.defaults.auto_update
 		
 	def get_auto_update_txt(self):
@@ -149,7 +149,7 @@ class SalusClient:
 			return (period / 60)+' '+locstr('minute(s)/timediff')
 		elif period<86400:
 			return (period / 3600)+' '+locstr('hour(s)/timediff')
-		else
+		else:
 			return (period / 86400)+' '+locstr('day(s)/timediff')
 	
 

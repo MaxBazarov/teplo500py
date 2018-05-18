@@ -67,7 +67,7 @@ class SalusDevice:
 			self.status = STATUS_OFFLINE
 		elif status.find('online') >=0 :
 			self.status = STATUS_ONLINE
-		else
+		else:
 			return log_error('SalusDevice:load_from_dom:can not understand device status='+status)
 		
 		return True

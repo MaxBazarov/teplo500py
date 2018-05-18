@@ -1,9 +1,12 @@
 import urllib.parse as urlparse
 import cgi
 import os.path
+import sys
+from datetime import date
 
 
 from web_utils import *
+from utils import *
 import AbstractApp
 import AbstractPage
 import AbstractREST
@@ -76,142 +79,105 @@ class WebApp(AbstractApp):
    		self.client = SalusClient.CreateAndLoad(self.client_id);
    		self.login_helper.save_login(client_id)
    		return True
-   	
 
-   	function save_logout(){    		
-   		$this->login_helper->logout();   		
-   		$this->client = null;
-   		$this->client_id = '';   
-   		
-   		return true;
-   	}
-
-   
-
-	function web_path()
-	{
-		return $this->home_path().'/web';
-	}
-
-	function page()
-	{
-		return $this->page;
-	}
-
-	function base_url()
-	{
-		return $this->config->web->base_url;
-	}
-
-	function redirect($url)
-	{
-		header('Location: '.$url);
-		exit;
-	}
-
-	function redirect_local($suburl)
-	{		
-		return $this->redirect($this->base_url().$suburl);
-	}
-
-	function redirect_to_login()
-	{
-		$this->save_logout();
-
-		$login_url = $this->base_url().$this::LOGIN_SUBURL;
-		return $this->redirect($login_url);
-	}	
-
-
-	private function _messages_log_path()
-	{
-		return $this->home_path().'/local/logs/messages.log';		
-	}
+   	def save_logout(self):
+   		self.login_helper.logout()
+   		self.client = None
+   		self.client_id = '';      		
+   		return True
+  
+  	def web_path(self):
+		return self.home_path()+'/web'
 	
 
-	function log_text($level,$text1,$text2='')
-	{
-		$date = new DateTime("now",new DateTimeZone('Europe/Moscow'));
-		$time = $date->format('Y-m-d H:i:s');
+	def page(self):
+		return self.page
+	
+	def base_url(self):
+		return self.config['web']['base_url']
+	
+	def redirect(self,url):
+		print("Location: "+url+"\n")
+		sys.exit()
 
-		$level_text = '';
-		switch($level){
-			case UTILS_LOG_OK:
-				$level_text=' [OK ] ';break;
-			case UTILS_LOG_ERR:
-				$level_text= ' [ERR] ';break;
-			case UTILS_LOG_DBG:
-				$level_text= ' [DBG] ';
-				break;
-		}
+	def redirect_local($suburl)
+		return self.redirect(self.base_url().$suburl);
 
+	def redirect_to_login(self):
+		self.save_logout()
 
-		$file = fopen($this->_messages_log_path(),'a');	
-		fwrite($file,'['.$time.']'.$level_text.$text1.$text2."\n");		
-		fclose($file);
-		return true;
-	}
-
-	function run_rest()
-	{
-		$rest_obj = null;
-
-		if($this->client_id=='') return AbstractREST::show_non_auth_error();
-		
-		switch ($this->rest_page){
-			case 'client':
-				include_once '../web/rest/ClientREST.php';
-				$rest_obj =  new ClientREST();
-				break;		
-			default:
-				return AbstractREST::ShowUknownCmd();
-				break;
-		}
-		return $rest_obj->run();
-	}		
-
-
-
-	function run()
-	{
-		$this->rest_page = http_get_param("rest_page");
-		if($this->rest_page!='') return $this->run_rest();
-
-		$this->page = http_get_param("page");
-		$page = null;
-
-		// pre-checks
-		if($this->page=='') $this->page = 'home';	
-		if($this->client_id=='') $this->page = 'login';		
+		login_url = self.base_url() + CONSTS['LOGIN_SUBURL'];
+		return self.redirect(login_url)
 		
 
-		switch ($this->page){
-			case 'login':
-				include_once '../web/Pages/LoginPage.php';
-				$page = new LoginPage();
-				break;
-			case 'account':
-				include_once '../web/Pages/AccountPage.php';
-				$page = new AccountPage();
-				break;
-			case 'settings':
-				include_once '../web/Pages/SettingsPage.php';
-				$page = new SettingsPage();
-				break;
-			case 'logout':
-				return $this->redirect_to_login();
-			case 'home':
-			default:
-				include_once '../web/Pages/HomePage.php';
-				$page = new HomePage(); 			
-				break;
+	def _messages_log_path(self):	
+		return self.home_path()+'/local/logs/messages.log'
+	
+	
+	def log_text(self, level, text1, text2=''):
+		date = datetime.now()
+		time = date.strftime('%y-%m-%d %H:%M:%S')	
+
+		prifixes={
+			Log.OK:' [OK ] ',
+			Log.ERR:' [ERR ] ',
+			Log.DBG:' [DBG ] '
 		}
 
-		$page->run();
+		try:
+			with open(self._messages_log_path(), 'a') as fp:					
+				fp.write('['+$time+']'+ prefixes[level] + text1 + text2 +"\n");
+
+			return True
 
 
-		return true;
-	}
+	def run_rest(self):
+		rest_obj = None
 
-}
-?>
+		if self.client_id='':
+			return AbstractREST.show_non_auth_error()
+		
+		if self.rest_page = 'client':
+			import('../web/rest/ClientREST')
+			rest_obj =  ClientREST().ClientREST()
+		else:
+			return AbstractREST.ShowUknownCmd()
+		
+		return rest_obj.run()
+
+
+	def run(self):
+	
+		self.rest_page = http_get_param("rest_page")
+		if self.rest_page!='':
+			return self.run_rest()
+
+		self.page = http_get_param("page")
+		page_obj = None
+
+		## pre-checks
+		if self.page=='':
+			self.page = 'home'
+		if self.client_id=='':
+			self.page = 'login'
+		
+		## init current page
+		if self.page=='login':
+			import('../web/Pages/LoginPage')
+			page_obj = LoginPage.LoginPage()
+		elif self.page=='account':
+			import('../web/Pages/AccountPage')
+			page_obj = AccountPage.AccountPage()
+		elif self.page=='settings':
+			import('../web/Pages/SettingsPage')
+			page_obj = SettingsPage.SettingsPage()
+		elif self.page=='logout':
+			return self.redirect_to_login()
+		else:
+			import('../web/Pages/HomePage')
+			page_obj = HomePage.HomePage()
+
+		page_obj.run()
+
+		return True
+	

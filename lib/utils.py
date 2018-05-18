@@ -3,7 +3,7 @@ import os.path
 
 # DEFINE CONSTANTS
 Class Log(Enum):
-	OK= 1 
+	OK = 1 
 	DBG = 2
 	ERR = 3
 
