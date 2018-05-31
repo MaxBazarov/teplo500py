@@ -1,4 +1,5 @@
 import urllib.parse as urlparse
+import cgitb
 import cgi
 import os.path
 import sys
@@ -38,6 +39,9 @@ class WebApp(AbstractApp):
 
 		self.url = '' ## TODO: initialise URL
 		self.get_params = urlparse.parse_qs(urlparse.urlparse(self.url).query)
+		
+
+		cgitb.enable()
 		self.form = cgi.FieldStorage()
 	
 	def init(self):

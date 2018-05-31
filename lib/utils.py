@@ -1,5 +1,6 @@
 import requests
 import os.path
+from time import time
 
 # DEFINE CONSTANTS
 Class Log(Enum):
@@ -30,6 +31,8 @@ def temp_to_str(temp):
 	else:
 		return str(temp) + '°'
 	
+def c():    
+    return hex(int(time()*10000000))[2:]
 
 ##  ========================== LOW LEVEL LIBRARY =========================== 
 def time_diff(start_time, end_time = None):
