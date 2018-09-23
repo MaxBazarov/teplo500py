@@ -130,9 +130,9 @@ class WebApp(AbstractApp):
 
 		try:
 			with open(self._messages_log_path(), 'a') as fp:					
-				fp.write('['+$time+']'+ prefixes[level] + text1 + text2 +"\n");
+				fp.write('['+time+']'+ prefixes[level] + text1 + text2 +"\n")
 
-			return True
+		return True
 
 
 	def run_rest(self):
