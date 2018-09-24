@@ -1,11 +1,12 @@
+
 import CmdApp
 
 app = CmdApp.CmdApp()
-if( !app.init()):
+if( not app.init()):
 	log_error('Can not initiate app')
 	exit(-1)
 
-if( !app.parse_cmd_line() ):
+if( not app.parse_cmd_line() ):
 	exit -1;
 
 app.run_server()

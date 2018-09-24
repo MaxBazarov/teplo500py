@@ -1,15 +1,12 @@
-import * from utils
-import * from AbstractApp
-import SalusConnect
+from Teplo500.utils import *
+from Teplo500.AbstractApp import * 
+from Teplo500.SalusConnect import * 
+
 import argparse
 import time
-
 from datetime import date
 
 class CmdApp(AbstractApp):
-
-	private $cmd='update_all';
-	private $log_debug=false;
 
 	def __init__(self):
 		super().__init__(self)
@@ -29,7 +26,7 @@ class CmdApp(AbstractApp):
 
 		args = parser.parse_args()
 
-		if args.help is not None:		{
+		if args.help is not None:
 			self.cmd_print_args();
 			exit;
 
@@ -40,23 +37,24 @@ class CmdApp(AbstractApp):
 			log_error('app_init: unknown "cmd"='+args.cmd)
 			self.cmd_print_args()
 			return False			
-		}
-		self.cmd = $cmd;
+		
+		self.cmd = args.cmd;
 
-		if args.mode == 'real':				
+		if args.mode == 'real' :				
 			self.salus.set_mode(SalusConnect.MODE_REAL)
-		else if args.mode == 'emul':				
+		elif args.mode == 'emul':				
 			self.salus.set_mode(SalusConnect.MODE_EMUL)
-		else ## unknown application mode
+		else:
+			## unknown application mode
 			log_error('app_init: unknown "mode"='+args.mode)
 			self.cmd_print_args()
 			return False	
 
 		if args.emul == 'online':				
 			self.salus.set_emul_submode( SalusConnect.EMUL_ONLINE )
-		else if args.emul == 'offline':				
-			self.salus.set_emul_submode( SalusConnect::EMUL_OFFLINE )
-		else ##unknown application mode
+		elif args.emul == 'offline':				
+			self.salus.set_emul_submode( SalusConnect.EMUL_OFFLINE )
+		else: ##unknown application mode
 			log_error('app_init: unknown "emul"='+args.emul);
 			self.cmd_print_args()
 			return False
@@ -92,10 +90,10 @@ class CmdApp(AbstractApp):
 	def run_once(self):
 		
 		if(self.cmd=='update_all'):
-			if(!self.salus.create_load_clients()) return False
-			if(!self.salus.update_clients_from_site(true)) return False	
+			if( not self.salus.create_load_clients()): return False
+			if( not self.salus.update_clients_from_site(true)): return False	
 			return
-		else if self.cmd == 'create':
+		elif self.cmd == 'create':
 			client = SalusClient.Factory_CreateAndRegister('Nikolay','89268884889@mail.ru','****')
 			if(client is None):
 				log_error('CmdApp: run: failed to create and register new client')

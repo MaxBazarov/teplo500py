@@ -1,16 +1,17 @@
+# coding=latin-1
 import requests
 import os.path
 from time import time
 
 # DEFINE CONSTANTS
-Class Log(Enum):
+class Log(Enum):
 	OK = 1 
 	DBG = 2
 	ERR = 3
 
 ## ========================== LOCALISATION =========================== 
 ## localise string
-def locstr($str, param1=None, param2=None, param3=None):
+def locstr(str, param1=None, param2=None, param3=None):
 	str = app.translate_string(str)
 
 	if param1 is not None:
@@ -18,7 +19,7 @@ def locstr($str, param1=None, param2=None, param3=None):
 		if param2 is not None:
 			str = str_replace('{2}',param2,str)
 			if param3 is not None:
-				$str = str_replace('{3}',$param3,$str);
+				str = str_replace('{3}',param3,str);
 	return str;
 
 
@@ -36,9 +37,9 @@ def c():
 
 ##  ========================== LOW LEVEL LIBRARY =========================== 
 def time_diff(start_time, end_time = None):
-
-	$start = new DateTime(); 
-	$start->setTimestamp($start_time);
+	'''
+	start = new DateTime(); 
+	start->setTimestamp($start_time);
 	$end = new DateTime("now");
 	if$end_time) $end->setTimestamp($end_time);
 
@@ -81,6 +82,8 @@ def time_diff(start_time, end_time = None):
     // Prepend 'since ' or whatever you like 
     return $interval->format($format); 
 }
+	'''
+	return 0
 
 
 def clear_textid(id):
@@ -95,7 +98,7 @@ def save_json_config(file_path, data):
 
 	try:
 		with open(file_path, 'w') as fp:
-			json.dump(data,fp sort_keys=False, indent=4);
+			json.dump(data,fp,sort_keys=False, indent=4);
 	except OSError as err:
 		log_error("save_json_config() {0}".format(err))
 		return False
@@ -125,9 +128,8 @@ def load_json_config(file_path):
 	return config
 
 
-def log_text(level=Log.OK, text1, text2=None):
-	app.log_text(level, text1, text2);
-
+def log_text(level, text1, text2=None):
+	app.log_text(level, text1, text2)
 	return True
 
 def log_error(text1):
