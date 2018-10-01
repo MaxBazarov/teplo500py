@@ -1,7 +1,6 @@
 import os.path
 from mako.template import Template
-
-from utils.py import *
+from Teplo500.utils import *
 
 TEMPLATES_FOLDER = '/system/email_templates'
 EMAILS_FOLDER = '/local/logs/emails'
@@ -34,7 +33,7 @@ class EmailTemplate:
     
 
     def compile_subject(self):
-        return $this->_compile('_subject')
+        return this._compile('_subject')
 
 class Emailer:
 

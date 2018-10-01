@@ -1,7 +1,11 @@
 # coding=latin-1
 import requests
 import os.path
+from enum import Enum
 from time import time
+import json	
+
+app = None
 
 # DEFINE CONSTANTS
 class Log(Enum):
@@ -22,6 +26,12 @@ def locstr(str, param1=None, param2=None, param3=None):
 				str = str_replace('{3}',param3,str);
 	return str;
 
+
+def choose(check,value1,value2):
+	if check:
+		return value1
+	else:
+		return value2
 
 ## ========================== LOW LEVEL LIBRARY =========================== 
 def temp_to_str(temp):	
@@ -93,12 +103,11 @@ def clear_textid(id):
 	return id
 
 
-def save_json_config(file_path, data):
-	import json	
+def save_json_config(file_path, data):	
 
 	try:
 		with open(file_path, 'w') as fp:
-			json.dump(data,fp,sort_keys=False, indent=4);
+			json.dump(data,fp,sort_keys=False, indent=4)
 	except OSError as err:
 		log_error("save_json_config() {0}".format(err))
 		return False
@@ -128,7 +137,7 @@ def load_json_config(file_path):
 	return config
 
 
-def log_text(level, text1, text2=None):
+def log_text(level, text1, text2=''):
 	app.log_text(level, text1, text2)
 	return True
 

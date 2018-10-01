@@ -1,10 +1,10 @@
-from utils.py import *
 import time
 import os
 import xml.etree.ElementTree as ET
 
-import salus-emul
-from SalusZone import SalusZone
+from Teplo500.utils import *
+from Teplo500.salus_emul import *
+from Teplo500 import SalusZone
 
 STATUS_UNDEFINED = 0
 STATUS_OFFLINE = 1
@@ -79,7 +79,7 @@ class SalusDevice:
 		log_d = lambda message:  log_debug('[SalusDevice '+self.id+'] switch_esm: '+message) 
 		log_ok = lambda msg: log_ok('[SalusDevice '+self.id+'] switch_esm: '+message)
 
-		if !len(self.zones):
+		if not len(self.zones):
 			return log_ok('No zones')
 
 		for zone in  self.zones:
@@ -88,7 +88,7 @@ class SalusDevice:
 			data = {
 				'devId' : self.id,
 				'esoption_submit' : '1',
-				'esoption' : enable_esm?'0':'1',
+				'esoption' : choose(enable_esm,'0','1'),
 				'token': self.token
 			}
 			## GET DEVICE HTML FROM IT500 SITE
@@ -106,16 +106,16 @@ class SalusDevice:
 	
 		self.id = data['id']
 		self.name = data['name']
-		self.status = $data['status']
-		self.updated = $data['updated']
-		self.token = $data['token']
+		self.status = data['status']
+		self.updated = data['updated']
+		self.token = data['token']
 
 		zone_last_index = 0
 		self.zones = []
 
 		for zone_data in data.zones:
 			zone = SalusZone(self)
-			zone.load($zone_data);
+			zone.load(zone_data);
 
 			self.zones.append(zone)		
 
@@ -211,7 +211,7 @@ class SalusDevice:
 				zone = SalusZone(self,zone_last_index,uniqid())
 			
 
-			if !zone->load_from_dom(parent_node,li_node,existing_zone is None):
+			if not zone.load_from_dom(parent_node,li_node,existing_zone is None):
 				log_error('SalusDevice:load Can not init Zone')
 				return False
 			
@@ -220,7 +220,7 @@ class SalusDevice:
 			if existing_zone is None:
 				self.zones.append(zone)
 			
-			zone_last_index++
+			zone_last_index+=1
 
 		return True
 
@@ -266,10 +266,10 @@ class SalusDevice:
 			'lang':'en'
 		}
 		## GET DEVICE HTML FROM IT500 SITE
-		req = net_http_request( self.href,SalusConnect::DEVICES_URL, data,'GET',self.client->get_phpsessionid() )
+		req = net_http_request( self.href,SalusConnect.DEVICES_URL, data,'GET',self.client.get_phpsessionid() )
 
 		## dump HTML into file for future analyse
-		file_name = app->home_path()+'/local/output/device_'+self.id+'.html'
+		file_name = app.home_path()+'/local/output/device_'+self.id+'.html'
 		with os.open(file_name, 'w') as file:
 		    file.write(req.text)
 		
@@ -283,7 +283,7 @@ class SalusDevice:
 	def save_name_to_site(self):
 		log_debug('SalusDevice: save_name_to_site : starting');
 
-		if not self.client->login_to_site():
+		if not self.client.login_to_site():
 			return log_error('SalusDevice: save_name_to_site: failed to login')
 		
 
@@ -295,10 +295,10 @@ class SalusDevice:
 			'submitRename' : 'submit'
 		}
 
-		req = net_http_request( SalusConnect::RENAME_DEVICE_URL,SalusConnect::DEVICES_URL, data,'POST', self.client->get_phpsessionid(),'text/html')
+		req = net_http_request( SalusConnect.RENAME_DEVICE_URL,SalusConnect.DEVICES_URL, data,'POST', self.client.get_phpsessionid(),'text/html')
 
-		if !req:
-			return log_error('SalusDevice: save_name_to_site: failed to get "'+SalusConnect::RENAME_DEVICE_URL+'"')
+		if not req:
+			return log_error('SalusDevice: save_name_to_site: failed to get "'+SalusConnect.RENAME_DEVICE_URL+'"')
 	
 		log_ok('SalusDevice: save_name_to_site: completed')
 

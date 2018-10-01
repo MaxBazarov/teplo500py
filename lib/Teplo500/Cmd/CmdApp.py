@@ -4,14 +4,16 @@ from Teplo500.SalusConnect import *
 
 import argparse
 import time
-from datetime import date
+from datetime import datetime
 
 class CmdApp(AbstractApp):
 
 	def __init__(self):
-		super().__init__(self)
+		super().__init__()
 		self.cmd = 'update_all'
 		self.log_debug = False
+
+		print(self.salus)
 
 	def cmd_print_args(self):
 		print('Command line arguments: --cmd create|update_all --mode real|emul --emul online|offline  --debug --help\n')
@@ -22,13 +24,8 @@ class CmdApp(AbstractApp):
 		parser.add_argument('--mode',default='real')
 		parser.add_argument('--emul',default='online')
 		parser.add_argument('--debug')
-		parser.add_argument('--help')
-
+		
 		args = parser.parse_args()
-
-		if args.help is not None:
-			self.cmd_print_args();
-			exit;
 
 		self.log_debug = args.debug is not None
 
@@ -64,14 +61,13 @@ class CmdApp(AbstractApp):
 	def log_text(self, level, text1, text2=''):
 		date = datetime.now()
 		time = date.strftime('%y-%m-%d %H:%M:%S')	
-
-		prifixes={
+		
+		prefixes={
 			Log.OK:' [OK ] ',
 			Log.ERR:' [ERR ] ',
 			Log.DBG:' [DBG ] '
 		}
-
-		print('['+time+']'+ prefixes[level] + text1 + text2 +"\n")
+		print('['+time+']'+ prefixes[level] + text1 + text2)
 		
 		return True
 

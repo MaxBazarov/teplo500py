@@ -1,7 +1,7 @@
-from utils import *
 from datetime import date
 
-import Emailer
+from Teplo500.utils import *
+import Teplo500.Emailer
 
 class AbstractAlert:
 
@@ -54,7 +54,7 @@ class LowTempAlert(AbstractAlert):
 			last_time = self.data['exec_time']
 			end_time = last_time + self.conf['period']
 			if now < end_time:
-				log_debug('LowTempAlert: test_client_zone: skip alert because need wait for additional '+(end_time-now).' secs')
+				log_debug('LowTempAlert: test_client_zone: skip alert because need wait for additional '+(end_time-now)+' secs')
 				self.exec_time = last_time
 				return False
 		
@@ -65,12 +65,12 @@ class LowTempAlert(AbstractAlert):
 
 		template =  Emaler.EmailTemplate('low_temp')
 		template.client_name= client.name
-	    template.current_temp = temp_to_str(zone.current_temp)
-	    template.zone_name = zone.name
+		template.current_temp = temp_to_str(zone.current_temp)
+		template.zone_name = zone.name
 
-	    emailer = Emailer.Emailer(client.alert_email)
+		emailer = Emailer.Emailer(client.alert_email)
 		emailer.set_template(template)
-		if not $emailer.send():
+		if not emailer.send():
 			log_error('LowTempAlert: test_client_zone: can not send email')
 		
 		return True

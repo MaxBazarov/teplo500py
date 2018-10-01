@@ -37,7 +37,7 @@ def save_client_history(client):
 
 	return True
 
-def function find_client_history(client,date):
+def find_client_history(client,date):
 
 	result = {
 		'prev_date':None,
@@ -72,7 +72,7 @@ def function find_client_history(client,date):
 
 
 
-def function load_client_history(client,date):
+def load_client_history(client,date):
 
 	file_path = client.get_folder_path()+'/history/'+ date.strftime('%y-%m-%d')
 	
@@ -91,7 +91,7 @@ def function load_client_history(client,date):
 				else:
 					## process other lines
 					data['records'].append( line.split(':').pop() )
-				counter++
+				counter+=1
 
 			return result
 	except OSError as err:
@@ -103,7 +103,7 @@ def function load_client_history(client,date):
 
 	return None
 
-def function _write_history_header(client,fp):
+def  _write_history_header(client,fp):
 
 	fp.write('time;')
 	for dev in client.devices:

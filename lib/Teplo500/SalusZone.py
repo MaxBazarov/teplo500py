@@ -1,6 +1,6 @@
-from utils.py import *
-import salus-emul
-import SalusDevice, SalusClient
+from Teplo500.utils import *
+from Teplo500.salus_emul import *
+from Teplo500 import SalusDevice, SalusClient
 import time
 
 ## PUBLIC CONSTANTS
@@ -24,8 +24,8 @@ class SalusZone:
 	## Arguments
 	## device: SalusDevice or None
 	def __init__(self, device, index=1,id=''):
-    
-    	self.id = id
+
+		self.id = id
 		self.index = index
 		self.name = ''
 		self.current_temp = None
@@ -179,9 +179,9 @@ class SalusZone:
 		## get current auto program
 		##self.load_autotemp_from_dom($xpath,$zone_div_node);
 
-		log_ok('[ZONE #'+self.index+'] Temp '+temp_to_str(self.current_temp)+(self.heating?'[HEATING]':'')+' Mode Temp '+temp_to_str(self.current_mode_temp));
+		log_ok('[ZONE #'+self.index+'] Temp '+temp_to_str(self.current_temp)+choose(self.heating,'[HEATING]','')+' Mode Temp '+temp_to_str(self.current_mode_temp))	
 
-		// touch last updated time
+		## touch last updated time
 		self.updated = int(time.time())
 		
 		return True

@@ -1,24 +1,28 @@
-from utils.py import *
 import os, time, sys
-import SalusConnect
+from Teplo500 import SalusConnect
+from Teplo500.utils import *
+import Teplo500.utils
 
 class AbstractApp:	
 
-	def __init__(self):
-    	self.salus = SalusConnect()
-    	self.timezone = '' ## example: Europe/Moscow
+	def __init__(self):	
+		Teplo500.utils.app = self	
+
+		self.salus = SalusConnect.SalusConnect()
+		print(self.salus)
+		self.timezone = '' ## example: Europe/Moscow
 		self.lang = '' ## example: en
 		self.config = {}  ## dictionary with system.conf content
 		self.salus = None ## ref to SalusConnect instance
 
 		self.locales = {}
-	
-    def __del__(self):
-    	pass
-	
-    def init(self):
 		
-		## load system config
+	def __del__(self):
+		return True
+	
+	def init(self):
+		
+		## load system config		)
 		config = load_json_config('../local/system.conf')
 		if config is None:
 		   return False		   
@@ -31,9 +35,8 @@ class AbstractApp:
 		time.tzset()
 		 
 		return True
-	
-
-	def log_text(self, level = Log.OK, text1, text2=None):	
+		
+	def log_text(self, level, text1, text2=None):	
 		## should be re-impplented in child class
 		return sys.exit()
 
@@ -68,6 +71,4 @@ class AbstractApp:
 			if str.find('/')==-1:
 				return str				
 			else:
-				return str.split('/')[0]
-		
-
+				return str.split('/')[0]		

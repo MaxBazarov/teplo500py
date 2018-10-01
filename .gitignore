@@ -1,1 +1,2 @@
-client
+local
+*.pyc

@@ -1,6 +1,7 @@
 import sys
 sys.path.insert(1, "/Users/baza/Github/teplo500py/lib")
 from Teplo500.Cmd import CmdApp
+from Teplo500.utils import *
 
 app = CmdApp.CmdApp()
 if( not app.init()):

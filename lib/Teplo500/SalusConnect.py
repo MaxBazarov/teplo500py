@@ -1,6 +1,6 @@
-from utils.py import *
-import salus-emul
-import SalusZone, SalusDevice, SalusClient
+from Teplo500.utils import *
+from Teplo500.salus_emul import *
+from Teplo500 import SalusZone, SalusDevice, SalusClient
 
 ## PUBLIC CONSTANTS
 PUBLIC_URL = 'https://salus-it500.com/public/'

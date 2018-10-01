@@ -6,11 +6,11 @@ import xml.etree.ElementTree as ET
 from datetime import date
 
 ## Own Libs
-from utils.py import *
-import Emailer
-import Alert
-import SalusHistoryHelper
-import salus-emul
+from Teplo500.utils import *
+import Teplo500.Emailer
+import Teplo500.Alert
+import Teplo500.SalusHistoryHelper
+from Teplo500.salus_emul import *
 
 
 ## args:
@@ -30,7 +30,7 @@ def CreateAndLoad(client_id):
 
 	client = SalusClient(client_id)
 	
-	if !client.load():
+	if not client.load():
 		return log_error('Factory_CreateAndLoad: run: can not load client')
 	
 
@@ -50,15 +50,15 @@ def CreateAndRegister(name,email,password):
 
 	client = SalusClient(email)
 
-	if !client._set_name(name):
+	if not client._set_name(name):
 	 return False
-	if !client._set_login(email,password):
+	if not client._set_login(email,password):
 	 return False
 
-	if !client.register():
+	if not client.register():
 		return log_error('Factory_CreateAndRegister: run: can not register new client')
 	
-	if !client.load():
+	if not client.load():
 		return log_error('Factory_CreateAndRegister: run: can not load client')
 
 
@@ -71,15 +71,16 @@ def CreateAndRegister(name,email,password):
 class SalusClient:
 
 	def __init__(self,id):   
-    	id = cgi.escape(id.strip(),True)
+		## TODO: escape id
+    	##id = cgi.escape(id.strip(),True)
     	
     	# PUBLIC
-    	self.id = id
-    	self.name = ''
-    	self.alert_email = ''
-    	self.config = {}
-    	self.devices = [] ## list of {SalusDevice}
-    	self.data_updated_time = 0 ## time of last data update
+		self.id = id
+		self.name = ''
+		self.alert_email = ''
+		self.config = {}
+		self.devices = [] ## list of {SalusDevice}
+		self.data_updated_time = 0 ## time of last data update
 
 		## PRIVATE 
 		self.login_email = ''
@@ -87,9 +88,9 @@ class SalusClient:
 		self.PHPSESSID = ''
 		
 	## check do we need to update it right now or not?
-    def is_updated_required(self):
-    	if self.data_updated_time==0:
-    	 return True
+	def is_updated_required(self):
+		if self.data_updated_time==0:
+			return True
 
 		conf_period = self.get_auto_update()
 		if conf_period==0: 
@@ -100,7 +101,7 @@ class SalusClient:
 
 		return now_period >= conf_period
 
-    def update_from_site(self):
+	def update_from_site(self):
 		log_ok('[CLIENT '+self.id+'] Updating from site...')
 
 		if not self._update_device_list_from_site():
@@ -113,23 +114,23 @@ class SalusClient:
 	
 
 	def switch_esm(self, enable_esm):
-		log_d = lambda message: log_debug('[CLIENT '.self.id.'] switch_esm(): '.message)
-		log_e = lambda message: log_error('[CLIENT '.self.id.'] switch_esm(): '.message)
-		log_ok = lambda message: log_ok('[CLIENT '.self.id.'] switch_esm(): '.message)
+		log_d = lambda message: log_debug('[CLIENT '+self.id+'] switch_esm(): '+message)
+		log_e = lambda message: log_error('[CLIENT '+self.id+'] switch_esm(): '+message)
+		log_ok = lambda message: log_ok('[CLIENT '+self.id+'] switch_esm(): '+message)
 
 		log_d('switching into '+enable_esm)
 
 
 		for device in self.devices:
-			if !device.switch_esm(enable_esm):
+			if not device.switch_esm(enable_esm):
 				return log_e('failed to switch')
 
 		log_ok('switched ESM successfully')
 
-		if !self.update_from_site():
+		if not self.update_from_site():
 			return log_e('failed to update data')
-        if !self.save_updated():
-        	return log_e('failed to save updated data')
+		if not self.save_updated():
+			return log_e('failed to save updated data')
 
 		return True
 	
@@ -173,16 +174,16 @@ class SalusClient:
 
 		for id in Alert.ALERT_IDS:
 			
-			if !(id in self.config.alerts):
+			if not(id in self.config.alerts):
 				continue
 
 			conf = self.config.alerts[id]
-			if !conf.on:
+			if not conf.on:
 				continue
 
 			log_debug('SalusClient: run_alerts: test alert'+id)
 
-			existing_data = id in data['alerts']?data['alerts'][id]:{}
+			existing_data = choose(id in data['alerts'],data['alerts'][id],{})
 
 			alert = Alert.CreateAlert(id,conf,existing_data)
 			if alert is None:
@@ -191,8 +192,8 @@ class SalusClient:
 			new_data['alerts'][id] = alert.test_client(self)
 		
 
-		// save new data
-		if !self._save_json_config('alerts.data',new_data):			
+		## save new data
+		if not self._save_json_config('alerts.data',new_data):			
 			return log_error('SalusClient: run_alerts: can not save new data')
 		
 		return True
@@ -265,8 +266,8 @@ class SalusClient:
 
 
 	def save_updated(self):
-##		if !self.save_history()) return False;
-##		if !self.run_alerts()) return False;
+##		if not self.save_history()) return False;
+##		if not self.run_alerts()) return False;
 		if not self.save_data():
 		 return False
 
@@ -279,7 +280,7 @@ class SalusClient:
 			'key':self.login_password
 		}
 
-		if no self._save_json_config('auth.conf',data):
+		if not self._save_json_config('auth.conf',data):
 			return log_error('SalusClient: save_auth: can not save client auth')
 		
 		return True
@@ -302,7 +303,7 @@ class SalusClient:
 		return True
 	
 
-	def get_data_for_save(self)	
+	def get_data_for_save(self):
 		return {
 			'time':time(),
 			'date':datetime.now().strftime('%y %m %d %H:%M:%S'),
@@ -336,7 +337,7 @@ class SalusClient:
 		return None
 	
 
-	//////////////////////////////////////////////////////////// PRIVATE FUNCTIONS //////////////////////////////////////
+	##//////////////////////////////////////////////////////////// PRIVATE FUNCTIONS //////////////////////////////////////
 
 	
 	def _set_login(self,email,password):
@@ -374,7 +375,7 @@ class SalusClient:
 
 	
 
- 	def _load_json_config(self, file_name, ignore_missing=False)
+	def _load_json_config(self, file_name, ignore_missing=False):
 
 		path = self.get_folder_path()+'/'+file_name;
 		if not os.path.exists(path):
@@ -408,9 +409,9 @@ class SalusClient:
 	
 
 		## GET FIRST COOKIE
-		data = array (
+		data = {
 			'lang':'en'
-		)
+		}
 		req = net_http_request( SalusConnect.START_URL,SalusConnect.START_URL, data,'GET' )	
 	
 		self.PHPSESSID = req.cookies['PHPSESSID'] if 'PHPSESSID' in req.cookies else ''
@@ -448,7 +449,7 @@ class SalusClient:
 			log_debug('SalusClient: _update_devices_from_site : loaded real data from site')			
 			devices_html = result['text'];
 			with open(app.home_path()+'/local/output/devices.html', 'w') as f:
-    			f.write(devices_html)
+				f.write(devices_html)
 		elif app.salus.is_emul_mode():
 			log_debug('SalusClient: _update_devices_from_site : load faked data from local file')
 			devices_html = salus-emul.emul_load_devices()
@@ -461,14 +462,16 @@ class SalusClient:
 	## args
 	##		devices_html: string
 	## return: True=success or False=failed
-	def _parse_html_devices(self,devices_html)
+	def _parse_html_devices(self,devices_html):
+		return False
+		'''		
 	
 		log_d = lambda message:  log_debug('SalusClient: _parse_html_devices(): '+message) 
 
 		log_d('starting...')
-		dom = new DOMDocument;
+		dom = new DOMDocument
 		libxml_use_internal_errors(True)
-		if !dom.loadHTML(devices_html,LIBXML_NOWARNING)) return log_error('salus_parse_devices(): Can not parse devices from HTML')
+		if not dom.loadHTML(devices_html,LIBXML_NOWARNING)) return log_error('salus_parse_devices(): Can not parse devices from HTML')
 		
 		libxml_clear_errors()
 
@@ -493,31 +496,23 @@ class SalusClient:
 			existing_dev = self.get_device_by_id(id)
 			dev = existing_dev;
 
-			if !dev):
+			if not dev):
 				dev = new SalusDevice(this,id)
 			}
 
-			if !dev.init_from_dom(xpath,input_node)) return log_error('salus_parse_devices: can not load device')
+			if not dev.init_from_dom(xpath,input_node)) return log_error('salus_parse_devices: can not load device')
 
 			// STORE NEW DEVICE
-			if !existing_dev) array_push(self.devices,dev)
+			if not existing_dev) array_push(self.devices,dev)
 		}
+		'''
 		
 		log_d('done')		
-	}
+	
 
-	private def _load_devices_from_site()
-	{
-		foreach(self.devices as dev) {
-			if !dev.load_from_site()):
-				log_error('SalusClient: load_devices: can not load device #'.dev.id)
-				return False;
-			}			
-		}
-
+	def _load_devices_from_site():
+		for dev in self.devices:
+			if not dev.load_from_site():
+				log_error('SalusClient: load_devices: can not load device #'+dev.id)
+				return False
 		return True
-	}
-
-}
-
-?>
