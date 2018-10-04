@@ -1,16 +1,17 @@
 ## Standard Libs
 from email.utils import parseaddr
-import cgi
-import os
-import xml.etree.ElementTree as ET
+import cgi, os, time
+from io import StringIO
+from lxml import etree
 from datetime import date
 
 ## Own Libs
 from Teplo500.utils import *
-import Teplo500.Emailer
-import Teplo500.Alert
+from Teplo500.Alert import *
+from Teplo500.SalusDevice import *
+import Teplo500.salus_emul
 import Teplo500.SalusHistoryHelper
-from Teplo500.salus_emul import *
+import Teplo500.Emailer
 
 
 ## args:
@@ -18,23 +19,23 @@ from Teplo500.salus_emul import *
 ## result
 ##  ref to SalusClient or False
 
-def CreateAndLoad(client_id):
+def SalusClient_CreateAndLoad(client_id):
 
-	log_debug('Factory_CreateAndLoad: creating client '+client_id+'...')
+	log_debug('CreateAndLoad: creating client '+client_id+'...')
 
 	client_id =client_id.strip()
 	
 	if client_id=='':
-		return log_error('Factory_CreateAndLoad: construct: ID undefined')
+		return log_error('CreateAndLoad: construct: ID undefined')
 	
 
 	client = SalusClient(client_id)
 	
 	if not client.load():
-		return log_error('Factory_CreateAndLoad: run: can not load client')
+		return log_error('CreateAndLoad: run: can not load client')
 	
 
-	log_debug('Factory_CreateAndLoad: created client '+client_id)
+	log_debug('CreateAndLoad: created client '+client_id)
 
 	return client
 
@@ -45,7 +46,7 @@ def CreateAndLoad(client_id):
 ## result
 ##  ref to SalusClient or False
 
-def CreateAndRegister(name,email,password):
+def SalusClient_CreateAndRegister(name,email,password):
 	log_debug('Factory_CreateAndRegister: creating client')
 
 	client = SalusClient(email)
@@ -62,7 +63,7 @@ def CreateAndRegister(name,email,password):
 		return log_error('Factory_CreateAndRegister: run: can not load client')
 
 
-	log_debug('Factory_CreateAndRegister: created client '+client_id)
+	log_debug('Factory_CreateAndRegister: created client '+client.id)
 
 	return client
 
@@ -137,9 +138,9 @@ class SalusClient:
 
 	def get_auto_update(self):		
 		if 'auto_update' in self.config:
-			return self.config.auto_update
+			return self.config['auto_update']
 		else:
-			return app.config.defaults.auto_update
+			return app().config['defaults.auto_update']
 		
 	def get_auto_update_txt(self):
 		period = self.get_auto_update()
@@ -161,7 +162,7 @@ class SalusClient:
 	def run_alerts(self):
 	
 		## load old alert data
-		data = self._load_json_config('alerts.data',True,True)
+		data = self._load_json_config('alerts.data',True)
 		if data is None:
 			data = {
 				'alerts':[]
@@ -169,23 +170,23 @@ class SalusClient:
 		
 		## iterate know alerts
 		new_data = {
-			'alerts':[]
+			'alerts':{}
 		}
 
-		for id in Alert.ALERT_IDS:
+		for id in ALERT_IDS:
 			
-			if not(id in self.config.alerts):
+			if not(id in self.config['alerts']):
 				continue
 
-			conf = self.config.alerts[id]
-			if not conf.on:
+			conf = self.config['alerts'][id]
+			if not conf['on']:
 				continue
 
 			log_debug('SalusClient: run_alerts: test alert'+id)
 
 			existing_data = choose(id in data['alerts'],data['alerts'][id],{})
 
-			alert = Alert.CreateAlert(id,conf,existing_data)
+			alert = CreateAlert(id,conf,existing_data)
 			if alert is None:
 				return log_error('SalusClient: _run_zone_alert: can create Alert instance')	
 			
@@ -207,8 +208,8 @@ class SalusClient:
 		if auth_config is None:
 			return log_error('SalusClient: load: can not load auth config')
 			
-		self.login_email = auth_config.email;
-		self.login_password = auth_config.key;
+		self.login_email = auth_config['email'];
+		self.login_password = auth_config['key'];
 
 		## READ MAIN CONFIG
 		config = self._load_json_config('client.conf')
@@ -216,15 +217,15 @@ class SalusClient:
 			return log_error('SalusClient: load: can not load config')
 
 		self.config = config
-		self.alert_email = config.client.alert_email
-		self.name = config.client.name
+		self.alert_email = config['client']['alert_email']
+		self.name = config['client']['name']
 
 		## read existing data
 		self.devices = []
-		data = self._load_json_config('client.data',False,True)
+		data = self._load_json_config('client.data',False)
 		if data is not None:
-			self.data_updated_time = data.time
-			for device_data in data.devices:
+			self.data_updated_time = data['time']
+			for device_data in data['devices']:
 				device = SalusDevice(self) 
 				device.load(device_data)
 				self.devices.append(device)
@@ -254,7 +255,7 @@ class SalusClient:
 				'name':self.name,
 				'alert_email':self.login_email
 			},
-			'alerts':app.config.default_alerts
+			'alerts':app().config['default_alerts']
 		}
 
 		self.save_config()
@@ -305,17 +306,17 @@ class SalusClient:
 
 	def get_data_for_save(self):
 		return {
-			'time':time(),
-			'date':datetime.now().strftime('%y %m %d %H:%M:%S'),
+			'time':int(time.time()),
+			'date':time.strftime('%y %m %d %H:%M:%S'),
 			'devices':list(map(lambda device: device.get_data_for_save() ,self.devices))
 		}	
 
 	def save_history(self):
-		return SalusHistoryHelper.save_client_history(self)
+		return Teplo500.SalusHistoryHelper.save_client_history(self)
 	
 
 	def get_folder_path(self):
-		return app.clients_folder()+'/'+self.id;
+		return app().clients_folder()+'/'+self.id;
 
 
 	def get_device_by_id(self,id):
@@ -385,7 +386,7 @@ class SalusClient:
 				log_error('SalusClient: _load_json_config: can not find file "'+path+'"')
 				return None
 		
-		return load_json_config(path,assoc)
+		return load_json_config(path)
 	
 	def _save_json_config(self,file_name,config):
 	
@@ -403,8 +404,9 @@ class SalusClient:
 	## result: 
 	##		True or False
 	def login_to_site(self):
+		salus = app().salus
 	
-		if not app.salus.is_real_mode():
+		if not salus.is_real_mode():
 			return True
 	
 
@@ -412,8 +414,7 @@ class SalusClient:
 		data = {
 			'lang':'en'
 		}
-		req = net_http_request( SalusConnect.START_URL,SalusConnect.START_URL, data,'GET' )	
-	
+		req = net_http_request( salus.START_URL,salus.START_URL, data,'GET' )	
 		self.PHPSESSID = req.cookies['PHPSESSID'] if 'PHPSESSID' in req.cookies else ''
 		log_debug('login_to_site: PHPSESSID="'+self.PHPSESSID+'"')	
 
@@ -426,12 +427,12 @@ class SalusClient:
 			'login': 'Login'
 		}
 
+		req = net_http_request( salus.LOGIN_URL,salus.LOGIN_URL, data,'POST',self.PHPSESSID)
+		if req is None or req.status_code!=200:
+			log_error('SalusClient: login_to_site: failed to get "'+salus.LOGIN_URL+'"')
+			return None
 
-		result = net_http_request( SalusConnect.LOGIN_URL,SalusConnect.LOGIN_URL, data,'POST', self.PHPSESSID)
-		if result is None:
-			return log_error('SalusClient: login_to_site: failed to get "'+SalusConnect.LOGIN_URL+'"')
-
-		return True
+		return req
 
 
 	## result: 
@@ -440,77 +441,69 @@ class SalusClient:
 			
 		log_debug('SalusClient: _update_devices_from_site : started')
 
-		if not self.login_to_site():
+		req = self.login_to_site()
+		if req is None:
 			return log_error('SalusClient: _update_devices_from_site : failed  - can not ping')
 
 		devices_html = '';
 
-		if app.salus.is_real_mode():
+		if app().salus.is_real_mode():
 			log_debug('SalusClient: _update_devices_from_site : loaded real data from site')			
-			devices_html = result['text'];
-			with open(app.home_path()+'/local/output/devices.html', 'w') as f:
+			devices_html = req.text
+			with open(app().home_path()+'/local/output/devices.html', 'w') as f:
 				f.write(devices_html)
-		elif app.salus.is_emul_mode():
+		elif app().salus.is_emul_mode():
 			log_debug('SalusClient: _update_devices_from_site : load faked data from local file')
-			devices_html = salus-emul.emul_load_devices()
+			devices_html = Teplo500.salus_emul.emul_load_devices()
 		else:
-			return log_error('salus_login: unknown app mode='+app.salus.mode())
+			return log_error('salus_login: unknown app mode='+app().salus.mode())
 		
-		return self._parse_html_devices(devices_html)	
+		return self._parse_html_devices(devices_html)		
 
+
+	def get_phpsessionid(self):
+		return self.PHPSESSID
 
 	## args
 	##		devices_html: string
 	## return: True=success or False=failed
 	def _parse_html_devices(self,devices_html):
-		return False
-		'''		
-	
 		log_d = lambda message:  log_debug('SalusClient: _parse_html_devices(): '+message) 
 
 		log_d('starting...')
-		dom = new DOMDocument
-		libxml_use_internal_errors(True)
-		if not dom.loadHTML(devices_html,LIBXML_NOWARNING)) return log_error('salus_parse_devices(): Can not parse devices from HTML')
+
+		parser = etree.HTMLParser()
+		tree  = etree.parse(StringIO(devices_html), parser)
 		
-		libxml_clear_errors()
+		## search for <input name="devId" type="hidden" value="70181"/>
+		inputs_nodes = tree.xpath("//input[@name='devId']")
 
+		if len(inputs_nodes)==0 : return log_error('salus_parse_devices: Can not find device definition in HTML')
 
-		xpath = new DOMXpath(dom)
-
-		// search for <input name="devId" type="hidden" value="70181"/>
-		inputs_nodes = xpath.query("//input[@name='devId']")
-
-		if (is_null(inputs_nodes)) return log_error('salus_parse_devices: Can not find device definition in HTML')
-
-
-		// ADD FOUND DEVICES
-		foreach (inputs_nodes as input_node)
-		{
-			// GET ID	
-			id = get_node_attr_value(input_node,'value')		
-			log_d('id='.id)		
-			if id === False) return log_error('salus_parse_devices: Can not ID atrribute in node definition')
-
-			// TRY TO FIND ALREADY EXISTING DEVICE
+		## ADD FOUND DEVICES
+		for input_node in inputs_nodes:
+			## GET ID	
+			id = input_node.attrib['value']
+			log_d('id='+id)
+			
+			## TRY TO FIND ALREADY EXISTING DEVICE
 			existing_dev = self.get_device_by_id(id)
 			dev = existing_dev;
 
-			if not dev):
-				dev = new SalusDevice(this,id)
-			}
+			if not dev:
+				dev = SalusDevice(self,id)		
 
-			if not dev.init_from_dom(xpath,input_node)) return log_error('salus_parse_devices: can not load device')
+			if not dev.init_from_dom(input_node): return log_error('salus_parse_devices: can not load device')
 
-			// STORE NEW DEVICE
-			if not existing_dev) array_push(self.devices,dev)
-		}
-		'''
+			## STORE NEW DEVICE
+			if not existing_dev: array_push(self.devices,dev)		
 		
 		log_d('done')		
+
+		return True
 	
 
-	def _load_devices_from_site():
+	def _load_devices_from_site(self):
 		for dev in self.devices:
 			if not dev.load_from_site():
 				log_error('SalusClient: load_devices: can not load device #'+dev.id)

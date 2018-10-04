@@ -1,38 +1,39 @@
 from datetime import date
+import time,sys
 import os.path
 
+from Teplo500.utils import *
 
 def save_client_history(client):
 
 	## PREPARE LOG FILE
 
-	date = datetime.now()
-	time = date.strftime('%H:%M')	
+	nowstr = time.strftime('%H:%M')	
 
-	file_path = client.get_folder_path()+'/history/' + date.strftime('%y-%m-%d')	
+	file_path = client.get_folder_path()+'/history/' + time.strftime('%y-%m-%d')	
 	file_existed = os.path.isfile(file_path)
 
 	try:
 		with open(file_path, 'a') as fp:		
+			
 			## WRITE TO FILE AT FIRST TIME
 			if not file_existed:
 				_write_history_header(client,fp)			
 
 			## START 		
-			fp.write(time+';')
-
+			fp.write(nowstr+';')			
+			
 			##ask every device to save his state 
 			for dev in client.devices:		
 				for zone in dev.zones:		
-					fp.write(zone.current_temp+';')
-					fp.write(zone.current_mode_temp+';')				
-			
-			fp.write("\n")
+					fp.write(str(zone.current_temp)+';')
+					fp.write(str(zone.current_mode_temp)+';')						
+			fp.write("\n")						
 	except OSError as err:
-		log_error("save_client_history() {0}".format(err))
+		log_error("save_client_history() {0}"+format(err))
 		return False
 	except:
-		log_error("save_client_history(): Unexpected error:"+sys.exc_info()[0])		
+		log_error("save_client_history(): Unexpected error:")		
 		return False
 
 	return True

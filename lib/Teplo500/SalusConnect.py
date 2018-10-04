@@ -2,14 +2,6 @@ from Teplo500.utils import *
 from Teplo500.salus_emul import *
 from Teplo500 import SalusZone, SalusDevice, SalusClient
 
-## PUBLIC CONSTANTS
-PUBLIC_URL = 'https://salus-it500.com/public/'
-START_URL = 'https://salus-it500.com';
-LOGIN_URL= 'https://salus-it500.com/public/login.php'
-DEVICES_URL = 'https://salus-it500.com/public/devices.php'
-RENAME_DEVICE_URL = 'https://salus-it500.com/includes/rename.php'
-SET_URL = 'https://salus-it500.com/includes/set.php'
-
 MODE_REAL = 1
 MODE_EMUL = 2 
 MODE_CMD_HELP = 3
@@ -19,13 +11,21 @@ EMUL_OFFLINE = 2
 
 class SalusConnect:
 
+	## PUBLIC CONSTANTS
+	PUBLIC_URL = 'https://salus-it500.com/public/'
+	START_URL = 'https://salus-it500.com';
+	LOGIN_URL= 'https://salus-it500.com/public/login.php'
+	DEVICES_URL = 'https://salus-it500.com/public/devices.php'
+	RENAME_DEVICE_URL = 'https://salus-it500.com/includes/rename.php'
+	SET_URL = 'https://salus-it500.com/includes/set.php'
+
 	def __init__(self):
 		## public
 		self.clients = [] ## array of SalusClient
 
 		## private		
-		self._mode = MODE_REAL;
-		self._emul_submode = EMUL_ONLINE;
+		self._mode = MODE_REAL
+		self._emul_submode = EMUL_ONLINE
 	
 	 
 	## GETTERS
@@ -56,7 +56,7 @@ class SalusConnect:
 		## load every client
 		self.clients = []
 		for client_id in client_ids:
-			client = SalusClient.Factory_CreateAndLoad(client_id)
+			client = SalusClient.SalusClient_CreateAndLoad(client_id)
 			if client is None:
 				log_error('SalusConnect: run: can create client with id"'+client_id+'"')
 				continue
@@ -112,9 +112,9 @@ class SalusConnect:
 		
 		try:
 			import os
-			files_raw = os.listdir(app.clients_folder())
+			files_raw = os.listdir(app().clients_folder())
 		except:
-			log_error('SalusConnect: _load_client_list: can not scan dir "'+app.clients_folder()+'"')
+			log_error('SalusConnect: _load_client_list: can not scan dir "'+app().clients_folder()+'"')
 			return None
 
 		return list(filter(lambda x: '@' in x,files_raw))

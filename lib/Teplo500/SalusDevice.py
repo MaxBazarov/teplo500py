@@ -1,10 +1,12 @@
 import time
-import os
-import xml.etree.ElementTree as ET
+import os,os.path,sys
+from io import StringIO
+from lxml import etree
 
 from Teplo500.utils import *
+from Teplo500.SalusConnect import *
 from Teplo500.salus_emul import *
-from Teplo500 import SalusZone
+import Teplo500.SalusZone
 
 STATUS_UNDEFINED = 0
 STATUS_OFFLINE = 1
@@ -36,33 +38,34 @@ class SalusDevice:
 	## init name
 	## input_node: 
 	def init_from_dom(self,input_node):
+		salus = app().salus
 
 		## GET NAME AND HREF
 		## search for - <div class="deviceList 70181">
-		div_node = input_node.find("../..") #->parentNode->parentNode;		
-		
-		## search for <a class="deviceIcon online " href="control.php?devId=70181">STA00007781 </a>		
-		href_nodes =  div_node.findall("a[contains(@class,'deviceIcon')]")
+		div_node = input_node.xpath("../..")[0] ##->parentNode->parentNode;		
 
-		if not href_nodes:
-			return log_error('SalusDevice:load_from_dom: Can not find <a/>')
+		## search for <a class="deviceIcon online " href="control.php?devId=70181">STA00007781 </a>		
+		href_nodes =  div_node.xpath("a[contains(@class,'deviceIcon')]")
+
+		if len(href_nodes)==0: return log_error('SalusDevice:load_from_dom: Can not find <a/>')
 		
 		href_node = href_nodes[0]
 		self.name = href_node.text
 		if self.name.find('(')>=0:
-			self.name = self.name.split('(').rstrip()  ##sscanf(self.name,'%s (%[^)]s')[1];
+			self.name = self.name.split('(')[0].rstrip()  ##sscanf(self.name,'%s (%[^)]s')[1];
 
 		self.updated = int(time.time())
 		
-		if 'href' not in href_node.attrib:				
-			return log_error('SalusDevice:load_from_dom: can not find @href')			
 		href = href_node.attrib['href']
-
-		self.href = SalusConnect.PUBLIC_URL + href
+		if href is None: return log_error('SalusDevice:load_from_dom: can not find @href')			
+		
+		self.href = salus.PUBLIC_URL + href
 		log_debug('SalusDevice: init_from_dom href="'+self.href+'"')
 
 		## GET STATUS
 		status = href_node.attrib['class']
+		if status is None: return log_error('SalusDevice:load_from_dom:can not find device status')
+
 		if status.find('offline') >=0 :
 			self.status = STATUS_OFFLINE
 		elif status.find('online') >=0 :
@@ -93,7 +96,7 @@ class SalusDevice:
 			}
 			## GET DEVICE HTML FROM IT500 SITE
 			req = net_http_request( SalusConnect.SET_URL,SalusConnect.DEVICES_URL, data,'POST')
-			file_put_contents(app.home_path()+'/local/output/device_'+self.id+'_switch_esm.html',req.text);
+			file_put_contents(app().home_path()+'/local/output/device_'+self.id+'_switch_esm.html',req.text);
 		
 		
 		return log_ok('switched')
@@ -113,8 +116,8 @@ class SalusDevice:
 		zone_last_index = 0
 		self.zones = []
 
-		for zone_data in data.zones:
-			zone = SalusZone(self)
+		for zone_data in data['zones']:
+			zone = Teplo500.SalusZone.SalusZone(self)
 			zone.load(zone_data);
 
 			self.zones.append(zone)		
@@ -154,7 +157,7 @@ class SalusDevice:
 			return False
 
 		## GET HTML CONTENT
-		if app.salus.is_real_mode():
+		if app().salus.is_real_mode():
 			if self.is_online():
 				html = self._load_content_from_site()			
 		else:
@@ -164,43 +167,45 @@ class SalusDevice:
 			return False
 
 		## PARSE HTML CONTENT	
-		root = ET.fromstring(html)
+		parser = etree.HTMLParser()
+		tree  = etree.parse(StringIO(html), parser)
 		## TODO: handle errors	
-
 
 		## search for <div id="TabbedPanels1" class="TabbedPanels">
 		## 	 <ul class="TabbedPanelsTabGroup">
 		## 		 <li class="TabbedPanelsTab" 
 
-		li_nodes = root.findall('//div[@id="TabbedPanels1"]/ul[@class="TabbedPanelsTabGroup"]/li');
-		if not li_nodes:
+		li_nodes = tree.xpath('//div[@id="TabbedPanels1"]/ul[@class="TabbedPanelsTabGroup"]/li');
+		if len(li_nodes)==0:
 			log_debug('SalusDevice: load_from_site(): not found zones')
 			return True
 		
 		log_debug('SalusDevice: load_from_site(): found zones')
 
-
-		parent_node = root.find('//div[@id="mainContentPanel"]')
+		parent_node = tree.xpath('//div[@id="mainContentPanel"]')[0]
 		if parent_node is None:
 			log_error('SalusDevice: load_from_site() can not find <div id="mainContentPanel">')
 			return False
 		
 
 		## SEARCH FOR TOKEN	
-		token_node = parent_node.find('.//input[@id="token"]')
+		token_node = parent_node.xpath('.//input[@id="token"]')[0]
 		if token_node is None:
 			return log_error('SalusDevice: load_from_site() can not find <input id="token">')
 		
 		self.token = token_node.attrib['value']
 		
-		
+	
 		## ADD ZONES
 		zone_last_index = 1
 		for li_node in li_nodes:
 					
-			zone_id = li_node.attrib['id']
-			if zone_id=='settings':
-				continue;
+			if 'id' not in li_node.attrib:
+				zone_id = 'zone1'
+			else:
+				zone_id = li_node.attrib['id']
+				if zone_id=='settings':
+					continue;
 
 			## TRY TO FIND EXISTING ZONE
 			existing_zone = self.get_zone_by_index(zone_last_index)
@@ -237,15 +242,16 @@ class SalusDevice:
 	##   HTML content or false=failed
 	def _load_content_from_file(self):
 	
-		file_name = app.home_path()+'/local/fakes/device_'+self.id+'.html'
+		file_name = app().home_path()+'/local/fakes/device_'+self.id+'.html'
 		log_debug('SalusDevices: _load_content_from_file: '+self.id+' file="'+file_name+'"')
 		if not os.path.exists(file_name):
 			log_error('No '+file_name+' file')
 			return False		
+		
+		fo = open(file_name,"r")
+		html = fo.read()
+		fo.close()
 
-		with os.open(file_name,'r') as file:
-			html = file.read()
-	
 		return html
 	
 
@@ -266,12 +272,13 @@ class SalusDevice:
 			'lang':'en'
 		}
 		## GET DEVICE HTML FROM IT500 SITE
-		req = net_http_request( self.href,SalusConnect.DEVICES_URL, data,'GET',self.client.get_phpsessionid() )
+		req = net_http_request( self.href,app().salus.DEVICES_URL, data,'GET',self.client.get_phpsessionid() )
 
 		## dump HTML into file for future analyse
-		file_name = app.home_path()+'/local/output/device_'+self.id+'.html'
-		with os.open(file_name, 'w') as file:
-		    file.write(req.text)
+		file_name = app().home_path()+'/local/output/device_'+self.id+'.html'
+		fp = open(file_name, 'w')
+		fp.write(req.text)
+		fp.close()
 		
 		log_debug('SalusDevice: load_from_site: done')
 
@@ -295,7 +302,7 @@ class SalusDevice:
 			'submitRename' : 'submit'
 		}
 
-		req = net_http_request( SalusConnect.RENAME_DEVICE_URL,SalusConnect.DEVICES_URL, data,'POST', self.client.get_phpsessionid(),'text/html')
+		req = net_http_request( app().salus.RENAME_DEVICE_URL,app().salus.DEVICES_URL, data,'POST', self.client.get_phpsessionid(),'text/html')
 
 		if not req:
 			return log_error('SalusDevice: save_name_to_site: failed to get "'+SalusConnect.RENAME_DEVICE_URL+'"')

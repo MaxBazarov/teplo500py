@@ -5,7 +5,10 @@ from enum import Enum
 from time import time
 import json	
 
-app = None
+_app = None
+
+def app():
+	return _app
 
 # DEFINE CONSTANTS
 class Log(Enum):
@@ -16,14 +19,14 @@ class Log(Enum):
 ## ========================== LOCALISATION =========================== 
 ## localise string
 def locstr(str, param1=None, param2=None, param3=None):
-	str = app.translate_string(str)
+	str = _app.translate_string(str)
 
 	if param1 is not None:
 		str = str_replace('{1}',param1,str)
 		if param2 is not None:
 			str = str_replace('{2}',param2,str)
 			if param3 is not None:
-				str = str_replace('{3}',param3,str);
+				str = str_replace('{3}',param3,str)
 	return str;
 
 
@@ -138,7 +141,7 @@ def load_json_config(file_path):
 
 
 def log_text(level, text1, text2=''):
-	app.log_text(level, text1, text2)
+	_app.log_text(level, text1, text2)
 	return True
 
 def log_error(text1):
@@ -178,7 +181,7 @@ make an http POST request and return the response content and headers
 ##		.text
 ##		.cookies
 ##		.headers
-def net_http_request(url,referer,data,method,PHPSESSID):
+def net_http_request(url,referer,data,method,PHPSESSID=''):
 
 	log_debug('net_http_request(): url = '+url)
 
@@ -199,6 +202,7 @@ def net_http_request(url,referer,data,method,PHPSESSID):
 	if PHPSESSID!='':
 		cookies['PHPSESSID'] = PHPSESSID
 
+
 	if method=='GET':
 		headers["Content-Type"] = "text/html"
 		headers['charset'] = "utf-8"
@@ -208,7 +212,6 @@ def net_http_request(url,referer,data,method,PHPSESSID):
 		
 	else:
 		headers["Content-type"] = "application/x-www-form-urlencoded"
-
 		req = requests.post(url,data = data,headers=headers,cookies=cookies)
 	
 	return req

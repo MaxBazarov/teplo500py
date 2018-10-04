@@ -64,7 +64,7 @@ class WebApp(AbstractApp):
 
 		client_id = self.login_helper.try_login()
 		if client_id!=''
-   			self.client = SalusClient.CreateAndLoad(client_id)
+   			self.client = SalusClient_CreateAndLoad(client_id)
    			if self.client:
    				$self->client_id = client_id
 		
@@ -80,7 +80,7 @@ class WebApp(AbstractApp):
    		if client_id=='':
    			return False
 		self.client_id = client_id
-   		self.client = SalusClient.CreateAndLoad(self.client_id);
+   		self.client = SalusClient_CreateAndLoad(self.client_id);
    		self.login_helper.save_login(client_id)
    		return True
 

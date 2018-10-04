@@ -1,7 +1,10 @@
 from datetime import date
+import time
 
 from Teplo500.utils import *
 import Teplo500.Emailer
+
+ALERT_IDS = ['low_temp']
 
 class AbstractAlert:
 
@@ -42,40 +45,38 @@ class LowTempAlert(AbstractAlert):
 
 		## CHECK CURRENT TEMPERATURE
 		if zone.current_temp > conf['temp']:
-			log_debug('LowTempAlert: test_client_zone: skip alert because alert temp='+conf['temp'])
+			log_debug('LowTempAlert: test_client_zone: skip alert because alert temp='+str(conf['temp']))
 			self.exec_time = 0
 			return False
 	
 		
 		## CHECK WHEN WE SEND THIS ALERT AT LAST TIME
-		now = datetime.now()
+		now = int(time.time())
 		if 'exec_time' in self.data:
-			now = datetime.now()
 			last_time = self.data['exec_time']
 			end_time = last_time + self.conf['period']
 			if now < end_time:
-				log_debug('LowTempAlert: test_client_zone: skip alert because need wait for additional '+(end_time-now)+' secs')
+				log_debug('LowTempAlert: test_client_zone: skip alert because need wait for additional '+str(end_time-now)+' secs')
 				self.exec_time = last_time
 				return False
 		
 		self.exec_time = now
 		
-		log_debug('LowTempAlert: test_client_zone: run alert because alert temp='+conf['temp']+'  cond='+(zone.current_temp > conf['temp']))
+		log_debug('LowTempAlert: test_client_zone: run alert because alert temp='+str(conf['temp'])+'  cond='+str(zone.current_temp > conf['temp']))
 		## current temp is equal or lower than alert temperatur
 
-		template =  Emaler.EmailTemplate('low_temp')
+		template =  Teplo500.Emailer.EmailTemplate('low_temp')
 		template.client_name= client.name
 		template.current_temp = temp_to_str(zone.current_temp)
 		template.zone_name = zone.name
 
-		emailer = Emailer.Emailer(client.alert_email)
+		emailer = Teplo500.Emailer.Emailer(client.alert_email)
 		emailer.set_template(template)
 		if not emailer.send():
 			log_error('LowTempAlert: test_client_zone: can not send email')
 		
 		return True
 	
-ALERT_IDS = ['low_temp']
 
 def CreateAlert(id, alert_config, alert_data):
 

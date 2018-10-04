@@ -1,7 +1,10 @@
+from io import StringIO
+from lxml import etree
+import time
+
 from Teplo500.utils import *
 from Teplo500.salus_emul import *
 from Teplo500 import SalusDevice, SalusClient
-import time
 
 ## PUBLIC CONSTANTS
 MODE_UKNOWN = 0
@@ -67,7 +70,7 @@ class SalusZone:
 		self.mode = data['mode']
 		self.heating = data['heating']
 
-		log_debug('SalusZone: load: completed, index='.self.index);
+		log_debug('SalusZone: load: completed, index='+str(self.index))
 
 		return True
 	
@@ -79,7 +82,7 @@ class SalusZone:
 			'updated':self.updated,
 			'name':self.name,
 			'current_temp':self.current_temp,
-			'current_mode_temp':current_mode_temp,
+			'current_mode_temp':self.current_mode_temp,
 			'mode':self.mode,
 			'heating':self.heating
 		}
@@ -95,54 +98,52 @@ class SalusZone:
 		log_d = lambda msg: log_debug('SalusZone: load_from_dom(): '+msg)
 		log_e = lambda msg: log_error('SalusZone: load_from_dom(): '+msg)
 
-
 		index = self.index;
 		
-		img_node = li_node.find('img')
+		img_node = li_node.xpath('img')[0]
 		if img_node is None:
-			return log_e('can not find li/img');
+			return log_e('can not find li/img')
 
-		zone_div_node = parent_node.findall('div[@class="TabbedPanelsContent"]')[index-1]
+		zone_div_node = parent_node.xpath('div[@class="TabbedPanelsContent"]')[index-1]
 		if zone_div_node is None:
-			return log_e('can not find TabbedPanelsContent #'+(index-1))
+			return log_e('can not find TabbedPanelsContent #'+str(index-1))
 		
-		log_d('load zone #'+index)
-
+		log_d('load zone #'+str(index))
 		
 		if is_new_zone:
-			self.name = img_node.attrib['alt'];
+			self.name = img_node.attrib['alt']
 
 		## get room temperature
-		temp_room_node = zone_div_node.find('.//p[@id="current_room_tempZ'+index+'"]')
+		temp_room_node = zone_div_node.xpath('.//p[@id="current_room_tempZ'+str(index)+'"]')[0]
 		if temp_room_node is None:
-			return log_e('can not find room temperature for zone '+index)
+			return log_e('can not find room temperature for zone '+str(index))
 		self.current_temp = float(temp_room_node.text);
 
 
 		## get mode temperature
-		temp_node = zone_div_node.find('.//p[@id="current_tempZ'+index+'"]')
+		temp_node = zone_div_node.xpath('.//p[@id="current_tempZ'+str(index)+'"]')[0]
 		if temp_node is None:
-			return log_e('can not find temperature for zone '+index)
+			return log_e('can not find temperature for zone '+str(index))
 		self.current_mode_temp = float(temp_node.text)
 
 		## get heating on/off
-		heating_node = zone_div_node.find('.//img[@id="CH'+index+'onOff"][contains(@class,"display")]')
-		self.heating = heating_node is not None
+		heating_nodes = zone_div_node.xpath('.//img[@id="CH'+str(index)+'onOff"][contains(@class,"display")]')
+		self.heating = len(heating_nodes)>0
 		
-
 		## get energy save status
 		es_enabled = False
 		while True:
-			node = zone_div_node.find('.//input[@name="esoption_submit"]'+zone_div_node)
+			node = zone_div_node.xpath('.//input[@name="esoption_submit"]')[0]
 			if node is None:
 				return log_e('can not find esoption_submit')
+
+			if 'class' not in node.attrib:
+				return log_e('can not find esoption_submit/@class');
 
 			class_value = node.attrib['class']
 			log_d('class = '+class_value)
 
-			if class_value is None:
-				return log_e('can not find esoption_submit/@class');
-			elif class_value == 'esOff':
+			if class_value == 'esOff':
 				es_enabled = False
 			elif class_value == 'esOn':
 				es_enabled = True
@@ -154,8 +155,8 @@ class SalusZone:
 
 		##get mode		
 		while True:
-			mode_off_node = zone_div_node.find('.//p[@id="offButtonZ'+index+'"][contains(@class,"set")]')
-			if mode_off_node is not None:
+			mode_off_nodes = zone_div_node.xpath('.//p[@id="offButtonZ'+str(index)+'"][contains(@class,"set")]')
+			if len(mode_off_nodes)>0:
 				self.mode = MODE_OFF
 				break;
 			
@@ -163,23 +164,23 @@ class SalusZone:
 				self.mode = MODE_ES
 				break
 			
-			mode_man_node = zone_div_node.find('.//p[contains(@class,"heatingNote")][contains(@class,"heatingMan")]')
-			if mode_man_node is not None:
+			mode_man_nodes = zone_div_node.xpath('.//p[contains(@class,"heatingNote")][contains(@class,"heatingMan")]')
+			if len(mode_man_nodes)>0:
 				self.mode = MODE_MAN
 				break
 				
-			mode_auto_node = zone_div_node.find('.//p[contains(@class,"heatingNote")][contains(@class,"heatingAuto")]')
-			if mode_auto_node is not None:
+			mode_auto_nodes = zone_div_node.xpath('.//p[contains(@class,"heatingNote")][contains(@class,"heatingAuto")]')
+			if len(mode_auto_nodes)>0:
 				self.mode = MODE_AUTO
 				break;
 			
-			return log_e('can not understand mode for zone ' + index)
+			return log_e('can not understand mode for zone '+str(index))
 		
 		
 		## get current auto program
 		##self.load_autotemp_from_dom($xpath,$zone_div_node);
 
-		log_ok('[ZONE #'+self.index+'] Temp '+temp_to_str(self.current_temp)+choose(self.heating,'[HEATING]','')+' Mode Temp '+temp_to_str(self.current_mode_temp))	
+		log_ok('[ZONE #'+str(self.index)+'] Temp '+temp_to_str(self.current_temp)+choose(self.heating,'[HEATING]','')+' Mode Temp '+temp_to_str(self.current_mode_temp))	
 
 		## touch last updated time
 		self.updated = int(time.time())

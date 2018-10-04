@@ -6,22 +6,25 @@ import Teplo500.utils
 class AbstractApp:	
 
 	def __init__(self):	
-		Teplo500.utils.app = self	
+		Teplo500.utils._app = self	
 
-		self.salus = SalusConnect.SalusConnect()
-		print(self.salus)
 		self.timezone = '' ## example: Europe/Moscow
 		self.lang = '' ## example: en
 		self.config = {}  ## dictionary with system.conf content
 		self.salus = None ## ref to SalusConnect instance
 
 		self.locales = {}
+
+		os.environ['TZ'] = 'Europe/Moscow'
+		time.tzset()
+
 		
 	def __del__(self):
 		return True
 	
 	def init(self):
-		
+		self.salus = SalusConnect.SalusConnect()		
+
 		## load system config		)
 		config = load_json_config('../local/system.conf')
 		if config is None:

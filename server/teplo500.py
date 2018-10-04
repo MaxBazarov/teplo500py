@@ -1,4 +1,3 @@
-
 import CmdApp
 
 app = CmdApp.CmdApp()

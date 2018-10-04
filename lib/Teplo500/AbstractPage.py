@@ -1,4 +1,5 @@
 from mako.template import Template
+from Teplo500.utils import *
 
 import WebApp
 
@@ -8,6 +9,8 @@ class AbstractPage:
     
         ## extend variables
         variables ['sys_name'] = 'Teplo 500'
+
+        app = app()
         
         if app.client:
             variables['sys_client_name'] = app.client.name
