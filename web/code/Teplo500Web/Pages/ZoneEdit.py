@@ -1,6 +1,15 @@
-<?php
+from Teplo500.utils import *
+from Teplo500Web.web_utils import *
+import Teplo500.SalusZone
+from Teplo500Web.Pages.AbstractPage import *
+import time
 
+class ZoneEdit(AbstractPage):
+	def __init__(self):
+		self.error_msg=''
+		self.ok_msg=''
 
+'''
 class ZoneEdit extends AbstractPage
 {
 	private $error_msg='';
@@ -56,3 +65,4 @@ class ZoneEdit extends AbstractPage
  }
 
 ?>
+'''

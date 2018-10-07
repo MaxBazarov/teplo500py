@@ -1,5 +1,5 @@
 <%!
-  from utils import locstr,time_diff
+  from Teplo500.utils import locstr,time_diff
 %>
 
 ${layout_top}
@@ -19,22 +19,20 @@ ${layout_top}
 
     ${devices_html}
 
-      <div>      	
-      	<small>${time_diff(updated_raw)}><!-- (${$updated_text?>)--></small>
-      </div>
-      <div class="dropdown">
-      	<a class="btn btn-primary btn-sm btn-lg" role="button" aria-pressed="true" href="${home_update_link}>">${locstr("Update Now")}></a>     
-        <a class="btn btn-secondary btn-sm dropdown-toggle" href="#" role="button" id="dropdownActionsMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${locstr("Actions")}></a>
+    <div>      	
+      <small>${time_diff(updated_raw)}><!-- (${$updated_text?>)--></small>
+    </div>
+    <div class="dropdown">
+      <a class="btn btn-primary btn-sm btn-lg" role="button" aria-pressed="true" href="${home_update_link}>">${locstr("Update Now")}></a>     
+      <a class="btn btn-secondary btn-sm dropdown-toggle" href="#" role="button" id="dropdownActionsMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${locstr("Actions")}></a>
 
-          <div class="dropdown-menu" aria-labelledby="dropdownActionsMenu">            
-            <a class="dropdown-item" href="${home_switch_esm_link}>">${home_switch_esm_text}></a>             
-          </div>
+        <div class="dropdown-menu" aria-labelledby="dropdownActionsMenu">            
+          <a class="dropdown-item" href="${home_switch_esm_link}>">${home_switch_esm_text}></a>             
         </div>
-
-      
       </div>
-      <br/>
-      ${chart_html>
 
-
+    
+    </div>
+    <br/>
+    ${chart_html}
 ${layout_bottom}

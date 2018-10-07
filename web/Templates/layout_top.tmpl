@@ -1,6 +1,6 @@
 <!doctype html>
 <%!
-  from utils import locstr,date_str,temp_to_str
+  from Teplo500.utils import locstr,date_str,temp_to_str
 %>
 <html lang="en">
   <head>
@@ -34,13 +34,13 @@
       <div>
 		<ul class="nav nav-tabs">
 		  <li class="nav-item">
-		    <a class="nav-link ${menu_home_active}" href="${sys_home_link}">${locstr('Home')}></a>
+		    <a class="nav-link ${'active' if page=='home' else ''}" href="${sys_home_link}">${locstr('Home')}></a>
 		  </li>
 		  <li class="nav-item">
-		    <a class="nav-link ${menu_settings_active}" href="${sys_settings_link}">${locstr('Settings')}></a>
+		    <a class="nav-link ${'active' if page=='settings' else ''}" href="${sys_settings_link}">${locstr('Settings')}></a>
 		  </li>
 		  <li class="nav-item">
-		    <a class="nav-link ${menu_account_active}" href="${sys_account_link}">${locstr('Account')}></a>
+		    <a class="nav-link ${'active' if page=='account' else ''}" href="${sys_account_link}">${locstr('Account')}></a>
 		  </li>
 		</ul>
 </div>

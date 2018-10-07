@@ -10,8 +10,8 @@ EMUL_DEVICES_OFFLINE_FILE = "/local/fakes/devices_offline.html"
 ##   true=success or false=failed
 def emul_load_devices():
 
-	file_path = app().home_path()
-	if app().salus.emul_submode()==Teplo500.SalusConnect.EMUL_ONLINE:
+	file_path = get_app().home_path()
+	if get_app().salus.emul_submode()==Teplo500.SalusConnect.EMUL_ONLINE:
 		file_path += EMUL_DEVICES_ONLINE_FILE
 	else:
 		file_path += MUL_DEVICES_OFFLINE_FILE

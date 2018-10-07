@@ -6,29 +6,29 @@ import sys
 from datetime import date
 
 
-from web_utils import *
-from utils import *
-import AbstractApp
-import AbstractPage
-import AbstractREST
-import WebLoginHelper
-import SalusConnect
+from Teplo500Web.web_utils import *
+from Teplo500.utils import *
+from Teplo500.AbstractApp import *
 
-CONSTS = {
-	'ORG_SITE' : 'https://teplo500.ru'
-	'LOGIN_SUBURL' : '/index.php?page=login'
-	'LOGOUT_SUBURL' : '/index.php?page=logout'
-	'HOME_SUBURL' : '/index.php?page=home'
-	'SETTINGS_SUBURL' : '/index.php?page=settings'
-	'ACCOUNT_SUBURL' : '/index.php?page=account'
-}
-	
+import Teplo500.SalusConnect
+from Teplo500.SalusClient import *
+
+from Teplo500Web.REST.AbstractREST import *
+from Teplo500Web.REST.ClientREST import *
+from Teplo500Web.Pages.AbstractPage import *
+import Teplo500Web.WebLoginHelper
+
+from Teplo500Web.Pages.AccountPage import *
+from Teplo500Web.Pages.HomePage import *
+from Teplo500Web.Pages.LoginPage import *
+from Teplo500Web.Pages.SettingsPage import *
+from Teplo500Web.Pages.ZoneEdit import *
+
 
 class WebApp(AbstractApp):
 
-
 	def __init__(self):
-		super().__init__(self)
+		super().__init__()
 
 		self.client = None
 		self.login_helper = None
@@ -37,60 +37,74 @@ class WebApp(AbstractApp):
 		self.client_id = ''
 		self.page = ''
 
+		self.urls = {
+			'ORG_SITE' : 'https://teplo500.ru',
+			'LOGIN_SUBURL' : '/index.php?page=login',
+			'LOGOUT_SUBURL' : '/index.php?page=logout',
+			'HOME_SUBURL' : '/index.php?page=home',
+			'SETTINGS_SUBURL' : '/index.php?page=settings',
+			'ACCOUNT_SUBURL' : '/index.php?page=account'
+		}		
+
 		self.url = '' ## TODO: initialise URL
 		self.get_params = urlparse.parse_qs(urlparse.urlparse(self.url).query)
-		
 
-		cgitb.enable()
-		self.form = cgi.FieldStorage()
+		self.new_cookies = []
+			
 	
 	def init(self):
-		if not super().init(self):
-			return False
+		if not super().init(): return False
 
 		## check files
 		messages_path = self._messages_log_path()
 
 		## create messages log file if it doesn't exist
 		if not os.path.isfile(messages_path):
-			try:
-				with open(messages_path, 'w') as fp:
-		
-		
+			fp = open(messages_path, 'w')
+			fp.close()
+						
 		## prepare login cookie management helper
-		self.login_helper = WebLoginHelper.Create()
+		self.login_helper = Teplo500Web.WebLoginHelper.Create()
 		if not self.login_helper:
 			return log_error('WebApp: init(): can not create login helper')
 
 		client_id = self.login_helper.try_login()
-		if client_id!=''
+		if client_id!='':
    			self.client = SalusClient_CreateAndLoad(client_id)
    			if self.client:
-   				$self->client_id = client_id
+   				self.client_id = client_id
 		
 		## switch salus mode
-		self.salus.set_mode(self.config['web']['salus_mode']=='real'?SalusConnect.MODE_REAL:SalusConnect.MODE_EMUL);		
+		self.salus.set_mode(Teplo500.SalusConnect.MODE_REAL if self.config['web']['salus_mode']=='real' else Teplo500.SalusConnect.MODE_EMUL)
 			
 		return True
+
+	def set_cookie(self,key,value,max_age):
+		self.new_cookies.append({
+			'key':key,
+			'value':value,
+			'max_age':max_age
+		})
+
 
 	def get_client_id(self):
 		return self.client_id
 
 	def save_login(self,client_id):
-   		if client_id=='':
-   			return False
+		if client_id=='':
+			return False
 		self.client_id = client_id
-   		self.client = SalusClient_CreateAndLoad(self.client_id);
-   		self.login_helper.save_login(client_id)
-   		return True
+		self.client = SalusClient_CreateAndLoad(self.client_id);
+		self.login_helper.save_login(client_id)
+		return True
 
-   	def save_logout(self):
-   		self.login_helper.logout()
-   		self.client = None
-   		self.client_id = '';      		
-   		return True
-  
-  	def web_path(self):
+	def save_logout(self):
+		self.login_helper.logout()
+		self.client = None
+		self.client_id = '';      		
+		return True
+
+	def web_path(self):
 		return self.home_path()+'/web'
 	
 
@@ -104,13 +118,13 @@ class WebApp(AbstractApp):
 		print("Location: "+url+"\n")
 		sys.exit()
 
-	def redirect_local($suburl)
-		return self.redirect(self.base_url().$suburl);
+	def redirect_local(self,suburl):
+		return self.redirect(self.base_url()+suburl)
 
 	def redirect_to_login(self):
 		self.save_logout()
 
-		login_url = self.base_url() + CONSTS['LOGIN_SUBURL'];
+		login_url = self.base_url() + self.urls['LOGIN_SUBURL']
 		return self.redirect(login_url)
 		
 
@@ -122,15 +136,15 @@ class WebApp(AbstractApp):
 		date = datetime.now()
 		time = date.strftime('%y-%m-%d %H:%M:%S')	
 
-		prifixes={
+		prefixes={
 			Log.OK:' [OK ] ',
 			Log.ERR:' [ERR ] ',
 			Log.DBG:' [DBG ] '
 		}
 
-		try:
-			with open(self._messages_log_path(), 'a') as fp:					
-				fp.write('['+time+']'+ prefixes[level] + text1 + text2 +"\n")
+		fp = open(self._messages_log_path(), 'a')
+		fp.write('['+time+']'+ prefixes[level] + text1 + text2 +"\n")
+		fp.close()
 
 		return True
 
@@ -138,17 +152,21 @@ class WebApp(AbstractApp):
 	def run_rest(self):
 		rest_obj = None
 
-		if self.client_id='':
+		if self.client_id=='':
 			return AbstractREST.show_non_auth_error()
 		
-		if self.rest_page = 'client':
-			import('../web/rest/ClientREST')
-			rest_obj =  ClientREST().ClientREST()
+		if self.rest_page == 'client':			
+			rest_obj =  ClientREST()
 		else:
 			return AbstractREST.ShowUknownCmd()
 		
 		return rest_obj.run()
 
+	def make_response(self,content):
+		resp = make_response(content)
+		for cookie in self.new_cookies:			
+			resp.set_cookie(cookie['key'], cookie['value'],cookie['max_age'])
+		return resp
 
 	def run(self):
 	
@@ -162,26 +180,22 @@ class WebApp(AbstractApp):
 		## pre-checks
 		if self.page=='':
 			self.page = 'home'
+			
 		if self.client_id=='':
 			self.page = 'login'
 		
 		## init current page
 		if self.page=='login':
-			import('../web/Pages/LoginPage')
 			page_obj = LoginPage.LoginPage()
 		elif self.page=='account':
-			import('../web/Pages/AccountPage')
 			page_obj = AccountPage.AccountPage()
 		elif self.page=='settings':
-			import('../web/Pages/SettingsPage')
 			page_obj = SettingsPage.SettingsPage()
 		elif self.page=='logout':
 			return self.redirect_to_login()
 		else:
-			import('../web/Pages/HomePage')
-			page_obj = HomePage.HomePage()
+			page_obj = HomePage()
 
-		page_obj.run()
-
+		self.make_response(page_obj.run())
+		
 		return True
-	

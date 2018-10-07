@@ -38,7 +38,7 @@ class SalusDevice:
 	## init name
 	## input_node: 
 	def init_from_dom(self,input_node):
-		salus = app().salus
+		salus = get_app().salus
 
 		## GET NAME AND HREF
 		## search for - <div class="deviceList 70181">
@@ -96,7 +96,7 @@ class SalusDevice:
 			}
 			## GET DEVICE HTML FROM IT500 SITE
 			req = net_http_request( SalusConnect.SET_URL,SalusConnect.DEVICES_URL, data,'POST')
-			file_put_contents(app().home_path()+'/local/output/device_'+self.id+'_switch_esm.html',req.text);
+			file_put_contents(get_app().home_path()+'/local/output/device_'+self.id+'_switch_esm.html',req.text);
 		
 		
 		return log_ok('switched')
@@ -157,7 +157,7 @@ class SalusDevice:
 			return False
 
 		## GET HTML CONTENT
-		if app().salus.is_real_mode():
+		if get_app().salus.is_real_mode():
 			if self.is_online():
 				html = self._load_content_from_site()			
 		else:
@@ -242,7 +242,7 @@ class SalusDevice:
 	##   HTML content or false=failed
 	def _load_content_from_file(self):
 	
-		file_name = app().home_path()+'/local/fakes/device_'+self.id+'.html'
+		file_name = get_app().home_path()+'/local/fakes/device_'+self.id+'.html'
 		log_debug('SalusDevices: _load_content_from_file: '+self.id+' file="'+file_name+'"')
 		if not os.path.exists(file_name):
 			log_error('No '+file_name+' file')
@@ -272,10 +272,10 @@ class SalusDevice:
 			'lang':'en'
 		}
 		## GET DEVICE HTML FROM IT500 SITE
-		req = net_http_request( self.href,app().salus.DEVICES_URL, data,'GET',self.client.get_phpsessionid() )
+		req = net_http_request( self.href,get_app().salus.DEVICES_URL, data,'GET',self.client.get_phpsessionid() )
 
 		## dump HTML into file for future analyse
-		file_name = app().home_path()+'/local/output/device_'+self.id+'.html'
+		file_name = get_app().home_path()+'/local/output/device_'+self.id+'.html'
 		fp = open(file_name, 'w')
 		fp.write(req.text)
 		fp.close()
@@ -302,7 +302,7 @@ class SalusDevice:
 			'submitRename' : 'submit'
 		}
 
-		req = net_http_request( app().salus.RENAME_DEVICE_URL,app().salus.DEVICES_URL, data,'POST', self.client.get_phpsessionid(),'text/html')
+		req = net_http_request( get_app().salus.RENAME_DEVICE_URL,get_app().salus.DEVICES_URL, data,'POST', self.client.get_phpsessionid(),'text/html')
 
 		if not req:
 			return log_error('SalusDevice: save_name_to_site: failed to get "'+SalusConnect.RENAME_DEVICE_URL+'"')

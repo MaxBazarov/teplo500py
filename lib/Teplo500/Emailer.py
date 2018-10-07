@@ -18,7 +18,7 @@ class EmailTemplate:
         self.variables[key] = val    
 
     def _compile(self, file_name_postfix):
-        a = app()        
+        a = get_app()        
         path_to_file = a.home_path() + TEMPLATES_FOLDER + '/' + self.template_name + file_name_postfix+'.'+a.lang
 
         mytemplate = Template(filename=path_to_file)
@@ -55,7 +55,7 @@ class Emailer:
         ##body = self.template.compile_body()
 
         ## SEND REAL EMAIL USING GMAIL
-        gmail = app().config['gmail']
+        gmail = get_app().config['gmail']
         if gmail['enabled']:
             ## TODO: link to some emailer
             ## gmail['auth_name']            

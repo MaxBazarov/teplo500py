@@ -10,7 +10,7 @@ def save_client_history(client):
 
 	nowstr = time.strftime('%H:%M')	
 
-	file_path = client.get_folder_path()+'/history/' + time.strftime('%y-%m-%d')	
+	file_path = client.get_folder_path()+'/history/' + time.strftime(Constants.dateformat)	
 	file_existed = os.path.isfile(file_path)
 
 	try:
@@ -50,7 +50,7 @@ def find_client_history(client,date):
 	now = datetime.now()
 
 	## check existing of data
-	file_path  = base_path + date.strftime('%y-%m-%d')
+	file_path  = base_path + date.strftime(Constants.datetime)
 	if not os.path.isfile(file_path):
 		return False
 
@@ -58,14 +58,14 @@ def find_client_history(client,date):
 	if (now-date).days>0:
 		next_date = date + datetime.timedelta(days=1) 		
 
-		next_file_path  = base_path + next_date.strftime('%y-%m-%d')
+		next_file_path  = base_path + next_date.strftime(Constants.datetime)
 		if os.path.isfile(next_file_path):
 			result['next_date'] = next_date
 	
 
 	if True:
 		prev_date = date - datetime.timedelta(days=1) 		
-		pref_file_path  =  base_path + prev_date.strftime('%y-%m-%d')
+		pref_file_path  =  base_path + prev_date.strftime(Constants.datetime)
 		if os.path.isfile(pref_file_path):
 			result['prev_date'] = prev_date
 
@@ -75,7 +75,7 @@ def find_client_history(client,date):
 
 def load_client_history(client,date):
 
-	file_path = client.get_folder_path()+'/history/'+ date.strftime('%y-%m-%d')
+	file_path = client.get_folder_path()+'/history/'+ date.strftime(Constants.datetime)
 	
 	result = {
 		'header':[],

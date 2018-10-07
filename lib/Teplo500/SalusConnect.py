@@ -112,9 +112,9 @@ class SalusConnect:
 		
 		try:
 			import os
-			files_raw = os.listdir(app().clients_folder())
+			files_raw = os.listdir(get_app().clients_folder())
 		except:
-			log_error('SalusConnect: _load_client_list: can not scan dir "'+app().clients_folder()+'"')
+			log_error('SalusConnect: _load_client_list: can not scan dir "'+get_app().clients_folder()+'"')
 			return None
 
 		return list(filter(lambda x: '@' in x,files_raw))

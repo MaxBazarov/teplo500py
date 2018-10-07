@@ -1,6 +1,6 @@
 <%!
-  from utils import locstr,date_str
-  import SalusDevice
+  from Teplo500.utils import locstr,date_str
+  import Teplo500.SalusDevice
 %>
 
 <table class="table">
@@ -14,7 +14,7 @@
     </tr>
   </thead>
 	<tbody>
-    % if device.status==SalusDevice.STATUS_OFFLINE:
+    % if device.status==Teplo500.SalusDevice.STATUS_OFFLINE:
       <tr><td>
           <div style="color:red">${locstr('Offline')}</div>
       </td></tr>

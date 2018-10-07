@@ -18,7 +18,8 @@ MODES_TEXT={
 	MODE_AUTO: 'Auto/Mode',
 	MODE_OFF: 'Off/Mode',
 	MODE_MAN: 'Cust/Mode',
-	MODE_ES: 'ES/Mode'}
+	MODE_ES: 'ES/Mode'
+}
 
 
 class SalusZone:
@@ -51,7 +52,7 @@ class SalusZone:
 	def mode_str(self):
 		str = locstr(MODES_TEXT[self.mode])
 		if self.mode != MODE_OFF and self.mode!=MODE_ES:
-			str = str + ' ' + temp_to_str(sepf.current_mode_temp)
+			str = str + ' ' + temp_to_str(self.current_mode_temp)
 		return str;
 
     

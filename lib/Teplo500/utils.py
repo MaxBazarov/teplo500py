@@ -3,11 +3,12 @@ import requests
 import os.path
 from enum import Enum
 from time import time
+from datetime import date,datetime
 import json	
 
 _app = None
 
-def app():
+def get_app():
 	return _app
 
 # DEFINE CONSTANTS
@@ -16,18 +17,23 @@ class Log(Enum):
 	DBG = 2
 	ERR = 3
 
+
+class Constants:
+	dateformat = '%y-%m-%d'
+	dateformat_txt = '%d-%m-%y'
+
 ## ========================== LOCALISATION =========================== 
 ## localise string
 def locstr(str, param1=None, param2=None, param3=None):
 	str = _app.translate_string(str)
 
 	if param1 is not None:
-		str = str_replace('{1}',param1,str)
+		str = str.replace('{1}',param1)
 		if param2 is not None:
-			str = str_replace('{2}',param2,str)
+			str = str.replace('{2}',param2)
 			if param3 is not None:
-				str = str_replace('{3}',param3,str)
-	return str;
+				str = str.replace('{3}',param3)
+	return str
 
 
 def choose(check,value1,value2):
@@ -223,14 +229,15 @@ import time
 def uniqid(prefix = ''):
     return prefix + hex(int(time()))[2:10] + hex(int(time()*1000000) % 0x100000)[2:7]
 
+def date_now_txt():
+	return date.strftime(Constants.dateformat_txt)
 
-'''
-TODO: REPLACE FUNCTIONS
-function date_str($date){
-	return $date?$date->format('Y-m-d'):'';
-}
+def date_str(date):
+	if date is None:  return ''
+	return date.strftime(Constants.dateformat)	
 
-function date_txt($date){
-	return $date?$date->format('d-m-Y'):'';
-}
-'''
+def date_str(date):
+	if date is None:  return ''
+	if isinstance(date,int):
+		date = datetime.fromtimestamp(date)
+	return date.strftime(Constants.dateformat_txt)	

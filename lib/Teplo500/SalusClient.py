@@ -140,7 +140,7 @@ class SalusClient:
 		if 'auto_update' in self.config:
 			return self.config['auto_update']
 		else:
-			return app().config['defaults.auto_update']
+			return get_app().config['defaults.auto_update']
 		
 	def get_auto_update_txt(self):
 		period = self.get_auto_update()
@@ -255,7 +255,7 @@ class SalusClient:
 				'name':self.name,
 				'alert_email':self.login_email
 			},
-			'alerts':app().config['default_alerts']
+			'alerts':get_app().config['default_alerts']
 		}
 
 		self.save_config()
@@ -316,7 +316,7 @@ class SalusClient:
 	
 
 	def get_folder_path(self):
-		return app().clients_folder()+'/'+self.id;
+		return get_app().clients_folder()+'/'+self.id;
 
 
 	def get_device_by_id(self,id):
@@ -404,7 +404,7 @@ class SalusClient:
 	## result: 
 	##		True or False
 	def login_to_site(self):
-		salus = app().salus
+		salus = get_app().salus
 	
 		if not salus.is_real_mode():
 			return True
@@ -447,16 +447,16 @@ class SalusClient:
 
 		devices_html = '';
 
-		if app().salus.is_real_mode():
+		if get_app().salus.is_real_mode():
 			log_debug('SalusClient: _update_devices_from_site : loaded real data from site')			
 			devices_html = req.text
-			with open(app().home_path()+'/local/output/devices.html', 'w') as f:
+			with open(get_app().home_path()+'/local/output/devices.html', 'w') as f:
 				f.write(devices_html)
-		elif app().salus.is_emul_mode():
+		elif get_app().salus.is_emul_mode():
 			log_debug('SalusClient: _update_devices_from_site : load faked data from local file')
 			devices_html = Teplo500.salus_emul.emul_load_devices()
 		else:
-			return log_error('salus_login: unknown app mode='+app().salus.mode())
+			return log_error('salus_login: unknown app mode='+get_app().salus.mode())
 		
 		return self._parse_html_devices(devices_html)		
 
