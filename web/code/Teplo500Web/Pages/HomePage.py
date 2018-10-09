@@ -2,15 +2,39 @@ from Teplo500.utils import *
 from Teplo500Web.web_utils import *
 import Teplo500.SalusZone
 from Teplo500Web.Pages.AbstractPage import *
+import Teplo500Web.WebApp
+
 import time
 
-class HomePage(AbstractPage):
+def Homepage_init(flask):
+	flask.add_url_rule('/', 'Index', Index)
+	flask.add_url_rule('/home', 'Index', Index)
+	flask.add_url_rule('/home/edit_device/<device_id>', 'Edit_device', Edit_device)
+	return True
+
+def Index():
+	webapp = Teplo500Web.WebApp.CreateAndInit()
+	page = HomePage()	
+	return get_app().create_response(page.show_index())
 	
+def Edit_device(device_id):
+	webapp = Teplo500Web.WebApp.CreateAndInit()
+	page = HomePage()	
+	page.device_id = device_id
+
+	return get_app().create_response(
+		page.show_edit_device()
+	)
+
+	return self.show_edit_zone()
+
+class HomePage(AbstractPage):
+		
 	def __init__(self):
 		self.error_msg=''
 		self.ok_msg=''
 
-	def show_page(self):
+	def show_index(self):
 		a = get_app()
 		## SHOW DEVICES+ZONES
 	
@@ -58,9 +82,7 @@ class HomePage(AbstractPage):
 			'sys_body_custom'  :  ''
 		}
 
-		print(self.compile_page('home.tmpl',vars))
-
-		return True
+		return self.compile_page('home.tmpl',vars)
 
 
 	def show_edit_zone_temp(self,zone=None):
@@ -181,13 +203,12 @@ class HomePage(AbstractPage):
 		vars = {
 			'error_msg' : self.error_msg,
 			'ok_msg' : self.ok_msg,
-			'form_url' : app.urls['HOME_SUBURL']+'&cmd=save_device&device_id='+device.id,
+			'form_url' : app.urls['HOME_SUBURL']+'/save_device/'+device.id,
 			'name':device.name
 		}
 
 		html = self.compile_page('home_edit_device.tmpl',vars)
-		print(html)
-		return True
+		return html
 
 	def do_save_device(self):
 		while(True):
@@ -248,11 +269,8 @@ class HomePage(AbstractPage):
 
 		return self.show_page()
 
-
+		
 	def run(self):
-
-		cmd = http_get_param("cmd")
-		log_debug('HomePage: run: cmd="'+cmd+'"')
 				
 		## =========== COMMON  ====
 		if cmd=='update': 
@@ -288,7 +306,7 @@ class HomePage(AbstractPage):
 
 	def _get_current_device(self):
 		app = get_app()
-		device_id = http_get_param("device_id")
+		device_id = self.device_id
 		device =  app.client.get_device_by_id(device_id) if device_id!='' else None
 		if device is None:
 			 self.error_msg = locstr('Failed to find requested device.')

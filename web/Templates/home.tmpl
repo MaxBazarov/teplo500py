@@ -20,14 +20,14 @@ ${layout_top}
     ${devices_html}
 
     <div>      	
-      <small>${time_diff(updated_raw)}><!-- (${$updated_text?>)--></small>
+      <small>${time_diff(updated_raw)}<!-- (${updated_text})--></small>
     </div>
     <div class="dropdown">
-      <a class="btn btn-primary btn-sm btn-lg" role="button" aria-pressed="true" href="${home_update_link}>">${locstr("Update Now")}></a>     
-      <a class="btn btn-secondary btn-sm dropdown-toggle" href="#" role="button" id="dropdownActionsMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${locstr("Actions")}></a>
+      <a class="btn btn-primary btn-sm btn-lg" role="button" aria-pressed="true" href="${home_update_link}">${locstr("Update Now")}</a>     
+      <a class="btn btn-secondary btn-sm dropdown-toggle" href="#" role="button" id="dropdownActionsMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${locstr("Actions")}</a>
 
         <div class="dropdown-menu" aria-labelledby="dropdownActionsMenu">            
-          <a class="dropdown-item" href="${home_switch_esm_link}>">${home_switch_esm_text}></a>             
+          <a class="dropdown-item" href="${home_switch_esm_link}">${home_switch_esm_text}</a>             
         </div>
       </div>
 

@@ -1,6 +1,5 @@
 from Teplo500.utils import *
 from Teplo500.AbstractApp import * 
-from Teplo500.SalusClient import * 
 import Teplo500.SalusConnect
 
 import argparse
@@ -17,6 +16,7 @@ class CmdApp(AbstractApp):
 	def init(self):
 		if not super().init(): return False
 		print("CmdApp.init()")
+		print(self.salus)		
 
 		return True
 
@@ -96,7 +96,7 @@ class CmdApp(AbstractApp):
 			if( not self.salus.update_clients_from_site(True)): return False	
 			return
 		elif self.cmd == 'create':
-			client = SalusClient_CreateAndRegister('Nikolay','89268884889@mail.ru','****')
+			client = SalusClient.Factory_CreateAndRegister('Nikolay','89268884889@mail.ru','****')
 			if(client is None):
 				log_error('CmdApp: run: failed to create and register new client')
 			else:

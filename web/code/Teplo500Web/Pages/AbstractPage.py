@@ -1,6 +1,7 @@
 from mako.template import Template
 from Teplo500.utils import *
 
+
 class AbstractPage:
 
     def compile_template(self, file_name, variables):
@@ -30,12 +31,14 @@ class AbstractPage:
 
     def compile_page(self, file_name, variables):
         a = get_app()
-        ## prep navigation
-        log_debug('zzzzzz:'+a.page)
+        ## prep navigation        
         variables['page'] = a.page
         ##variables['menu_home_active'] = ''
         ##variables['menu_account_active'] = ''
         ##variables['menu_'+a.page+'_active'] = 'active'
+        if not 'sys_body_custom' in variables: variables['sys_body_custom']=''
+        if not 'sys_head_custom' in variables: variables['sys_head_custom']=''
+            
         variables['layout_top'] = self.compile_template('layout_top.tmpl',variables)
         variables['layout_bottom'] = self.compile_template('layout_bottom.tmpl',variables)
 

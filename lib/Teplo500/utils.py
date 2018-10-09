@@ -57,6 +57,7 @@ def c():
 ##  ========================== LOW LEVEL LIBRARY =========================== 
 def time_diff(start_time, end_time = None):
 	'''
+	TODO:
 	start = new DateTime(); 
 	start->setTimestamp($start_time);
 	$end = new DateTime("now");

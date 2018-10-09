@@ -3,8 +3,10 @@ import cgitb
 import cgi
 import os.path
 import sys
+import json
 from datetime import date
 
+from flask import make_response,request
 
 from Teplo500Web.web_utils import *
 from Teplo500.utils import *
@@ -25,6 +27,13 @@ from Teplo500Web.Pages.SettingsPage import *
 from Teplo500Web.Pages.ZoneEdit import *
 
 
+def CreateAndInit():
+	wa = WebApp()
+	if not wa.init():
+		return None			
+	return wa
+
+
 class WebApp(AbstractApp):
 
 	def __init__(self):
@@ -39,11 +48,11 @@ class WebApp(AbstractApp):
 
 		self.urls = {
 			'ORG_SITE' : 'https://teplo500.ru',
-			'LOGIN_SUBURL' : '/index.php?page=login',
-			'LOGOUT_SUBURL' : '/index.php?page=logout',
-			'HOME_SUBURL' : '/index.php?page=home',
-			'SETTINGS_SUBURL' : '/index.php?page=settings',
-			'ACCOUNT_SUBURL' : '/index.php?page=account'
+			'LOGIN_SUBURL' : '/login',
+			'LOGOUT_SUBURL' : '/logout',
+			'HOME_SUBURL' : '/home',
+			'SETTINGS_SUBURL' : '/settings',
+			'ACCOUNT_SUBURL' : '/account'
 		}		
 
 		self.url = '' ## TODO: initialise URL
@@ -54,6 +63,9 @@ class WebApp(AbstractApp):
 	
 	def init(self):
 		if not super().init(): return False
+
+		page = request.full_path.replace("?","/").split("/")[1]
+		self.page = page if page!="" else "home"
 
 		## check files
 		messages_path = self._messages_log_path()
@@ -162,11 +174,11 @@ class WebApp(AbstractApp):
 		
 		return rest_obj.run()
 
-	def make_response(self,content):
-		resp = make_response(content)
+	def create_response(self,content):
+		response = make_response(content)
 		for cookie in self.new_cookies:			
-			resp.set_cookie(cookie['key'], cookie['value'],cookie['max_age'])
-		return resp
+			response.set_cookie(cookie['key'], cookie['value'],cookie['max_age'])
+		return response
 
 	def run(self):
 	
@@ -184,7 +196,7 @@ class WebApp(AbstractApp):
 		if self.client_id=='':
 			self.page = 'login'
 		
-		## init current page
+		## init current page		)
 		if self.page=='login':
 			page_obj = LoginPage.LoginPage()
 		elif self.page=='account':
@@ -194,8 +206,7 @@ class WebApp(AbstractApp):
 		elif self.page=='logout':
 			return self.redirect_to_login()
 		else:
+			log_debug('home')
 			page_obj = HomePage()
 
-		self.make_response(page_obj.run())
-		
-		return True
+		return self.create_response(page_obj.run())
