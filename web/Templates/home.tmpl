@@ -3,18 +3,14 @@
 %>
 
 ${layout_top}
-
-    % if error_msg!='':
-      <div class="alert alert-danger" role="alert" style="display:none">
+    
+      <div class="alert alert-danger" role="alert" ${'style="display:none"' if error_msg=='' else ''}>
         ${error_msg}
       </div>
-    % endif
-
-    % if ok_msg!='':
-      <div class="alert alert-success" role="alert" style="display:none" >
+    
+      <div class="alert alert-success" role="alert" ${'style="display:none"' if ok_msg=='' else ''} >
         ${ok_msg}
       </div>
-    % endif
             
 
     ${devices_html}

@@ -5,11 +5,10 @@ ${layout_top}
 
 <h2>${locstr('Automatic Update/Settings')}</h2>
 
- % if error_msg!='':
-<div class="alert alert-danger" role="alert" style="display:none" >
-    ${error_msg}
-  </div>
-% endif
+      <div class="alert alert-danger" role="alert" ${'style="display:none"' if error_msg=='' else ''}>
+        ${error_msg}
+      </div>
+      
  
 <form method="post" action="${form_url}">          
   <div class="form-group">

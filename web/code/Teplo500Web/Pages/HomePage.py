@@ -9,8 +9,12 @@ import time
 def homepage_register(flask):
 	flask.add_url_rule('/', 'index', index)
 	flask.add_url_rule('/home', 'index', index)
-	flask.add_url_rule('/home/edit_device/<device_id>', 'edit_device', edit_device)
-	flask.add_url_rule('/home/save_device/<device_id>', 'save_device', save_device,methods=['POST'])
+	flask.add_url_rule('/home/devices/<device_id>/edit', 'edit_device', edit_device)
+	flask.add_url_rule('/home/devices/<device_id>/save', 'save_device', save_device,methods=['POST'])
+	flask.add_url_rule('/home/zones/<zone_id>/edit', 'edit_zone', edit_zone)
+	flask.add_url_rule('/home/zones/<zone_id>/save', 'save_zone', save_zone,methods=['POST'])
+	
+	flask.add_url_rule('/home/update', 'update', update)
 	return True
 
 def index():
@@ -27,11 +31,26 @@ def save_device(device_id):
 	page = HomePage()
 	page.device_id = device_id
 
-	log_debug('1')
 	html = page.do_save_device()
-	log_debug('2')
-	log_debug(html)
 	return get_app().create_response( html )
+
+def edit_zone(zone_id):
+	page = HomePage()	
+	page.zone_id = zone_id
+
+	return get_app().create_response( page.show_edit_zone())
+
+def save_zone(zone_id):
+	page = HomePage()
+	page.zone_id = zone_id
+
+	html = page.do_save_zone()
+	return get_app().create_response( html )
+
+def update():
+	page = HomePage()
+	return get_app().create_response( page.do_update())
+
 
 class HomePage(AbstractPage):
 		
@@ -78,8 +97,8 @@ class HomePage(AbstractPage):
 		vars = {
 			'error_msg' : self.error_msg,
 			'ok_msg' : self.ok_msg,
-			'home_update_link' : a.urls['HOME_SUBURL']+'&cmd=update',
-			'home_switch_esm_link' : a.urls['HOME_SUBURL']+'&cmd='+choose(esm,'disable_esm','enable_esm'),
+			'home_update_link' : a.urls['HOME_SUBURL']+'/update',
+			'home_switch_esm_link' : a.urls['HOME_SUBURL']+'/'+choose(esm,'disable_esm','enable_esm'),
 			'home_switch_esm_text':choose(esm,locstr('Disable Energy Save'),locstr('Enable Energy Save')),
 			'updated_raw':a.client.data_updated_time,
 			'updated_text' : datetime.fromtimestamp(a.client.data_updated_time).strftime("M d H:i:s"),
@@ -112,7 +131,7 @@ class HomePage(AbstractPage):
 			'error_msg' : self.error_msg,
 			'ok_msg' : self.ok_msg,
 			'temps':temps,
-			'form_url' : app.urls['HOME_SUBURL']+'&cmd=save_zone_temp&zone_id='+str(zone.id),
+			'form_url' : app.urls['HOME_SUBURL']+'/zones/'+str(zone.id)+"/save_temp",
 			'man_temp' : zone.current_mode_temp if (zone.mode==Teplo500.SalusZone.MODE_AUTO or zone.mode==Teplo500.SalusZone.MODE_MAN) else zone.current_temp,
 			'name':zone.name   
 		}
@@ -152,22 +171,20 @@ class HomePage(AbstractPage):
 	def show_edit_zone(self,zone=None):
 		app = get_app()
 		client = app.client
-		zone = zone if zone is not None else self._get_current_zone()
+		zone = zone if zone!=None else self._get_current_zone()		
 
-		if zone is None:
+		if not zone:
 			return self.show_index()
 
 		vars = {
 			'error_msg' : self.error_msg,
 			'ok_msg' : self.ok_msg,
-			'form_url' : app.urls['HOME_SUBURL']+'&cmd=save_zone&zone_id='+str(zone.id),
+			'form_url' : app.urls['HOME_SUBURL']+'/zones/'+str(zone.id)+"/save",
 			'name':zone.name
 		}
 
 		html = self.compile_page('home_edit_zone.tmpl',vars)
-		print(html)
-
-		return True
+		return html
 
 
 	def do_save_zone(self):
@@ -211,7 +228,7 @@ class HomePage(AbstractPage):
 		vars = {
 			'error_msg' : self.error_msg,
 			'ok_msg' : self.ok_msg,
-			'form_url' : app.urls['HOME_SUBURL']+'/save_device/'+device.id,
+			'form_url' : app.urls['HOME_SUBURL']+'/devices/'+device.id + "/save",
 			'name':device.name
 		}
 
@@ -306,7 +323,7 @@ class HomePage(AbstractPage):
 
 	def _get_current_zone(self):
 		app = get_app()
-		zone_id = http_get_param("zone_id")
+		zone_id = self.zone_id
 		zone =  app.client.get_zone_by_id(zone_id) if zone_id!='' else None
 		if zone is None:
 			 self.error_msg = locstr('Failed to find requested zone.')

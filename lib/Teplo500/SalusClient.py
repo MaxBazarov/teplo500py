@@ -327,14 +327,10 @@ class SalusClient:
 		return None
 	
 	def get_zone_by_id(self,id):
-		dev = self.get_device_by_id(id)
-		if dev is None:
-			return None
-
-		for zone in dev.zones:
-			if zone.id==id:
-				return zone
-		
+		for dev in self.devices:
+			for zone in dev.zones:
+				if zone.id==id:
+					return zone
 		return None
 	
 
