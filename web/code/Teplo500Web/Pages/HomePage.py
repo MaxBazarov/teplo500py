@@ -2,39 +2,46 @@ from Teplo500.utils import *
 from Teplo500Web.web_utils import *
 import Teplo500.SalusZone
 from Teplo500Web.Pages.AbstractPage import *
-import Teplo500Web.WebApp
+
 
 import time
 
-def Homepage_init(flask):
-	flask.add_url_rule('/', 'Index', Index)
-	flask.add_url_rule('/home', 'Index', Index)
-	flask.add_url_rule('/home/edit_device/<device_id>', 'Edit_device', Edit_device)
+def homepage_register(flask):
+	flask.add_url_rule('/', 'index', index)
+	flask.add_url_rule('/home', 'index', index)
+	flask.add_url_rule('/home/edit_device/<device_id>', 'edit_device', edit_device)
+	flask.add_url_rule('/home/save_device/<device_id>', 'save_device', save_device,methods=['POST'])
 	return True
 
-def Index():
-	webapp = Teplo500Web.WebApp.CreateAndInit()
-	page = HomePage()	
+def index():
+	page = HomePage()
 	return get_app().create_response(page.show_index())
 	
-def Edit_device(device_id):
-	webapp = Teplo500Web.WebApp.CreateAndInit()
+def edit_device(device_id):
 	page = HomePage()	
 	page.device_id = device_id
 
-	return get_app().create_response(
-		page.show_edit_device()
-	)
+	return get_app().create_response( page.show_edit_device())
 
-	return self.show_edit_zone()
+def save_device(device_id):
+	page = HomePage()
+	page.device_id = device_id
+
+	log_debug('1')
+	html = page.do_save_device()
+	log_debug('2')
+	log_debug(html)
+	return get_app().create_response( html )
 
 class HomePage(AbstractPage):
 		
 	def __init__(self):
+		super().__init__()
 		self.error_msg=''
-		self.ok_msg=''
+		self.ok_msg=''		
 
 	def show_index(self):
+		log_debug('1.1')
 		a = get_app()
 		## SHOW DEVICES+ZONES
 	
@@ -82,6 +89,7 @@ class HomePage(AbstractPage):
 			'sys_body_custom'  :  ''
 		}
 
+		log_debug('1.2')
 		return self.compile_page('home.tmpl',vars)
 
 
@@ -92,7 +100,7 @@ class HomePage(AbstractPage):
 		if zone is None:
 			zone = self._get_current_zone()
 		if zone is None:
-			return self.show_page()
+			return self.show_index()
 
 
 		## define temperature range 
@@ -138,7 +146,7 @@ class HomePage(AbstractPage):
 			self.ok_msg = locstr('Succesfully completed.')
 			break        
 
-		return self.show_page()
+		return self.show_index()
 
 
 	def show_edit_zone(self,zone=None):
@@ -147,7 +155,7 @@ class HomePage(AbstractPage):
 		zone = zone if zone is not None else self._get_current_zone()
 
 		if zone is None:
-			return self.show_page()
+			return self.show_index()
 
 		vars = {
 			'error_msg' : self.error_msg,
@@ -188,7 +196,7 @@ class HomePage(AbstractPage):
 			self.ok_msg = locstr('Succesfully updated.')
 			break
 		
-		return self.show_page()
+		return self.show_index()
 
 
 	def show_edit_device(self,device=None):
@@ -198,7 +206,7 @@ class HomePage(AbstractPage):
 			device =self._get_current_device()
 
 		if device is None:
-			return self.show_page();
+			return self.show_index();
 
 		vars = {
 			'error_msg' : self.error_msg,
@@ -239,7 +247,7 @@ class HomePage(AbstractPage):
 			self.ok_msg = locstr('Succesfully updated.')
 			break    
 
-		return self.show_page()
+		return self.show_index()
 
 
 	def do_update(self):
@@ -256,7 +264,7 @@ class HomePage(AbstractPage):
 
 		self.ok_msg = locstr('Succesfully updated.')
 
-		return self.show_page()
+		return self.show_index()
 
 	def do_switch_esm(self,enable_esm):
 		client = get_app().client
@@ -267,10 +275,10 @@ class HomePage(AbstractPage):
 
 		self.ok_msg = locstr('Succesfully switched ESM.')
 
-		return self.show_page()
+		return self.show_index()
 
 		
-	def run(self):
+	def run(self,cmd):
 				
 		## =========== COMMON  ====
 		if cmd=='update': 
@@ -293,7 +301,7 @@ class HomePage(AbstractPage):
 		if cmd=='save_device':                
 			return self.do_save_device()        
 
-		return self.show_page()
+		return self.show_index()
 
 
 	def _get_current_zone(self):

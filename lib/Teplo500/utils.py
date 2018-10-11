@@ -188,7 +188,7 @@ make an http POST request and return the response content and headers
 ##		.text
 ##		.cookies
 ##		.headers
-def net_http_request(url,referer,data,method,PHPSESSID=''):
+def net_http_request(url,referer,data,method,PHPSESSID='',content_type=''):
 
 	log_debug('net_http_request(): url = '+url)
 
@@ -211,14 +211,14 @@ def net_http_request(url,referer,data,method,PHPSESSID=''):
 
 
 	if method=='GET':
-		headers["Content-Type"] = "text/html"
+		headers["Content-Type"] = "text/html" if content_type=='' else content_type
 		headers['charset'] = "utf-8"
 
 		###header = header + "Content-Length: "+data_len+"\r\n";
 		req = requests.get(url,headers=headers,cookies=cookies)
 		
 	else:
-		headers["Content-type"] = "application/x-www-form-urlencoded"
+		headers["Content-type"] = "application/x-www-form-urlencoded" if content_type=='' else content_type
 		req = requests.post(url,data = data,headers=headers,cookies=cookies)
 	
 	return req

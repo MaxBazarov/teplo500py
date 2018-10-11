@@ -1,8 +1,13 @@
 from mako.template import Template
 from Teplo500.utils import *
 
+import Teplo500Web.WebApp
 
 class AbstractPage:
+
+    def __init__(self):
+        Teplo500Web.WebApp.CreateAndInit()
+
 
     def compile_template(self, file_name, variables):
     

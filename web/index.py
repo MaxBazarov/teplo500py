@@ -9,7 +9,7 @@ from Teplo500Web.Pages.HomePage import *
 
 flask_app = Flask(__name__)
 
-Homepage_init(flask_app)
+homepage_register(flask_app)
 
 '''
 @flask_app.route("/")
