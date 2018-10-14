@@ -145,8 +145,7 @@ class WebApp(AbstractApp):
 	
 	
 	def log_text(self, level, text1, text2=''):
-		date = datetime.now()
-		time = date.strftime('%y-%m-%d %H:%M:%S')	
+		stime = day_today().strftime('%y-%m-%d %H:%M:%S')	
 
 		prefixes={
 			Log.OK:' [OK ] ',
@@ -155,31 +154,17 @@ class WebApp(AbstractApp):
 		}
 
 		fp = open(self._messages_log_path(), 'a')
-		fp.write('['+time+']'+ prefixes[level] + text1 + text2 +"\n")
+		fp.write('['+stime+']'+ prefixes[level] + text1 + text2 +"\n")
 		fp.close()
 
 		return True
-
-
-	def run_rest(self):
-		rest_obj = None
-
-		if self.client_id=='':
-			return AbstractREST.show_non_auth_error()
-		
-		if self.rest_page == 'client':			
-			rest_obj =  ClientREST()
-		else:
-			return AbstractREST.ShowUknownCmd()
-		
-		return rest_obj.run()
 
 	def create_response(self,content):
 		response = make_response(content)
 		for cookie in self.new_cookies:			
 			response.set_cookie(cookie['key'], cookie['value'],cookie['max_age'])
 		return response
-
+'''
 	def run(self):
 	
 		self.rest_page = http_get_param("rest_page")
@@ -210,3 +195,19 @@ class WebApp(AbstractApp):
 			page_obj = HomePage()
 
 		return self.create_response(page_obj.run())
+'''
+
+'''
+	def run_rest(self):
+		rest_obj = None
+
+		if self.client_id=='':
+			return AbstractREST.show_non_auth_error()
+		
+		if self.rest_page == 'client':			
+			rest_obj =  ClientREST()
+		else:
+			return AbstractREST.ShowUknownCmd()
+		
+		return rest_obj.run()
+'''

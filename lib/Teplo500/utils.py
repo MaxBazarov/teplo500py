@@ -19,8 +19,8 @@ class Log(Enum):
 
 
 class Constants:
-	dateformat = '%y-%m-%d'
-	dateformat_txt = '%d-%m-%y'
+	dateformat = '%Y-%m-%d'
+	dateformat_txt = '%d-%m-%Y'
 
 ## ========================== LOCALISATION =========================== 
 ## localise string
@@ -230,15 +230,28 @@ import time
 def uniqid(prefix = ''):
     return prefix + hex(int(time()))[2:10] + hex(int(time()*1000000) % 0x100000)[2:7]
 
+def day_today():
+	return date.today()
+
 def date_now_txt():
-	return date.strftime(Constants.dateformat_txt)
+	return day_today().strftime(Constants.dateformat_txt)
 
-def date_str(date):
-	if date is None:  return ''
-	return date.strftime(Constants.dateformat)	
+## result: datetime.date
+def str_date(day_str):
+	return date.fromisoformat(day_str)
 
-def date_str(date):
-	if date is None:  return ''
-	if isinstance(date,int):
-		date = datetime.fromtimestamp(date)
-	return date.strftime(Constants.dateformat_txt)	
+## day: datetime.date
+def day_str(day):
+	if day is None:  return ''
+
+	if isinstance(day,int):
+		day = datetime.fromtimestamp(day)
+	elif isinstance(day,str):		
+		day = str_date(day)
+
+	return day.strftime(Constants.dateformat)	
+
+## day: datetime.date
+def day_txt(day):
+	if day is None:  return ''			
+	return day.strftime(Constants.dateformat_txt)	

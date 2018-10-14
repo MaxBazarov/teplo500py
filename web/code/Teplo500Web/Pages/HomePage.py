@@ -7,47 +7,47 @@ from Teplo500Web.Pages.AbstractPage import *
 import time
 
 def homepage_register(flask):
-	flask.add_url_rule('/', 'index', index)
-	flask.add_url_rule('/home', 'index', index)
-	flask.add_url_rule('/home/devices/<device_id>/edit', 'edit_device', edit_device)
-	flask.add_url_rule('/home/devices/<device_id>/save', 'save_device', save_device,methods=['POST'])
-	flask.add_url_rule('/home/zones/<zone_id>/edit', 'edit_zone', edit_zone)
-	flask.add_url_rule('/home/zones/<zone_id>/save', 'save_zone', save_zone,methods=['POST'])
+	flask.add_url_rule('/', 'homepage_index', homepage_index)
+	flask.add_url_rule('/home', 'homepage_index', homepage_index)
+	flask.add_url_rule('/home/devices/<device_id>/edit', 'homepage_edit_device', homepage_edit_device)
+	flask.add_url_rule('/home/devices/<device_id>/save', 'homepage_save_device', homepage_save_device,methods=['POST'])
+	flask.add_url_rule('/home/zones/<zone_id>/edit', 'homepage_edit_zone', homepage_edit_zone)
+	flask.add_url_rule('/home/zones/<zone_id>/save', 'homepage_save_zone', homepage_save_zone,methods=['POST'])
 	
-	flask.add_url_rule('/home/update', 'update', update)
+	flask.add_url_rule('/home/update', 'homepage_update', homepage_update)
 	return True
 
-def index():
+def homepage_index():
 	page = HomePage()
 	return get_app().create_response(page.show_index())
 	
-def edit_device(device_id):
+def homepage_edit_device(device_id):
 	page = HomePage()	
 	page.device_id = device_id
 
 	return get_app().create_response( page.show_edit_device())
 
-def save_device(device_id):
+def homepage_save_device(device_id):
 	page = HomePage()
 	page.device_id = device_id
 
 	html = page.do_save_device()
 	return get_app().create_response( html )
 
-def edit_zone(zone_id):
+def homepage_edit_zone(zone_id):
 	page = HomePage()	
 	page.zone_id = zone_id
 
 	return get_app().create_response( page.show_edit_zone())
 
-def save_zone(zone_id):
+def homepage_save_zone(zone_id):
 	page = HomePage()
 	page.zone_id = zone_id
 
 	html = page.do_save_zone()
 	return get_app().create_response( html )
 
-def update():
+def homepage_update():
 	page = HomePage()
 	return get_app().create_response( page.do_update())
 
@@ -272,12 +272,12 @@ class HomePage(AbstractPage):
 
 		if not client.update_from_site():
 			self.error_msg = locstr('Failed to update data.')
-			return False
+			return self.show_index()
 		
 
 		if not client.save_updated():
 			self.error_msg = locstr('Failed to save updated data.')
-			return False            
+			return self.show_index()            
 
 		self.ok_msg = locstr('Succesfully updated.')
 

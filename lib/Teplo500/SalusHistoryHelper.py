@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 import time,sys
 import os.path
 
@@ -12,6 +12,8 @@ def save_client_history(client):
 
 	file_path = client.get_folder_path()+'/history/' + time.strftime(Constants.dateformat)	
 	file_existed = os.path.isfile(file_path)
+
+	log_debug('save_client_history() write to file: '+file_path)
 
 	try:
 		with open(file_path, 'a') as fp:		
@@ -38,34 +40,34 @@ def save_client_history(client):
 
 	return True
 
-def find_client_history(client,date):
+## day: timestamp
+def find_client_history(client,odate):
 
 	result = {
 		'prev_date':None,
 		'next_date':None,
-		'date':date
+		'date':odate
 	}
 
 	base_path = client.get_folder_path()+'/history/'
-	now = datetime.now()
+	otoday = day_today()
 
 	## check existing of data
-	file_path  = base_path + date.strftime(Constants.datetime)
+	file_path  = base_path + day_str(odate)
 	if not os.path.isfile(file_path):
-		return False
+		log_debug('find_client_history check path:'+file_path)		
 
 	## date is not today (we are in the past)
-	if (now-date).days>0:
-		next_date = date + datetime.timedelta(days=1) 		
-
-		next_file_path  = base_path + next_date.strftime(Constants.datetime)
+	if (otoday-odate).days>0:
+		next_date = odate + timedelta(days=1) 		
+		next_file_path  = base_path + day_str(next_date)
 		if os.path.isfile(next_file_path):
 			result['next_date'] = next_date
 	
 
 	if True:
-		prev_date = date - datetime.timedelta(days=1) 		
-		pref_file_path  =  base_path + prev_date.strftime(Constants.datetime)
+		prev_date = odate - timedelta(days=1) 		
+		pref_file_path  =  base_path + day_str(prev_date)
 		if os.path.isfile(pref_file_path):
 			result['prev_date'] = prev_date
 
@@ -75,34 +77,30 @@ def find_client_history(client,date):
 
 def load_client_history(client,date):
 
-	file_path = client.get_folder_path()+'/history/'+ date.strftime(Constants.datetime)
+	file_path = client.get_folder_path()+'/history/'+ day_str(date)	
 	
 	result = {
 		'header':[],
 		'records':[]
 	}
 
-	try:
-		with open(file_path, 'r') as fp:		
-			counter = 0
-			for line in fp:			
-				if counter==0:
-					## process first header line (drop last empty ;)					
-					data['header'] = line.split(':').pop()
-				else:
-					## process other lines
-					data['records'].append( line.split(':').pop() )
-				counter+=1
+	if not os.path.isfile(file_path):
+		result['status']='not_found'
+		return result
 
-			return result
-	except OSError as err:
-		log_error("load_client_history() {0}".format(err))
-		return None
-	except:
-		log_error("load_client_history(): Unexpected error:"+sys.exc_info()[0])		
-		return None
-
-	return None
+	fp = open(file_path, 'r')
+	counter = 0
+	for line in fp:			
+		if counter==0:
+			## process first header line (drop last empty ;)					
+			result['header'] = line.split(';')[0:-1]
+		else:
+			## process other lines
+			rec = line.split(';')[0:-1]			
+			result['records'].append( rec )
+		counter+=1
+	fp.close()	
+	return result
 
 def  _write_history_header(client,fp):
 
@@ -113,7 +111,7 @@ def  _write_history_header(client,fp):
 			fp.write(zone_name+'/Current Temperature;')
 			fp.write(zone_name+'/Auto Temperature;')
 			
-	fwrite(file,"\n")
+	fp.write("\n")
 
 	return True
 

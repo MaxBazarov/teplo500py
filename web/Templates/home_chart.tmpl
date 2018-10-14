@@ -1,5 +1,5 @@
 <%!
-    from Teplo500.utils import locstr,date_str
+    from Teplo500.utils import locstr,day_str
 %>
 <div style="width:90%;" >
         <canvas id="canvas" class="chartjs-render-monitor" style="height:300px"></canvas>
@@ -10,12 +10,12 @@
     </div>
     <script>     
         function load_date(date){            
-            request.open('GET', '${sys_baseurl}/index.php?rest_page=client&cmd=get_chart_data&date='+date, true);
+            request.open('GET', '${sys_baseurl}/rest/get_chart_data/'+date, true);
             request.send(null);
         }
         var config = {
             type: 'line',
-            date: '${date_str(date)}',
+            date: '${day_str(date)}',
             data: {
             },
             options: {
@@ -26,7 +26,7 @@
                 },
                 title:{
                     display:true,
-                    text:'${locstr("Temperature values for {1}/chart",date_str(date))}',
+                    text:'${locstr("Temperature values for {1}/chart",day_str(date))}',
                 },
                 tooltips: {
                     mode: 'index',
@@ -81,7 +81,7 @@
                 if(request.status === 200) { // complete                      
                     data = JSON.parse(request.responseText);
                     config.date = data.date;
-                    config.options.title.text = data.date_txt;
+                    config.options.title.text = data.day_txt;
                     config.data.datasets = data.datasets;
                     config.data.labels = data.labels;
                     window.myLine.update();
@@ -89,7 +89,7 @@
                     //                                    
                     prevDay = document.getElementById('prevDay');                    
                     if(data.prev_date.length){
-                        prevDay.innerHTML = '<< '+data.prev_date_txt;
+                        prevDay.innerHTML = '<< '+data.prev_day_txt;
                         prevDay.addEventListener('click', function() {            
                            load_date(data.prev_date);
                         });
@@ -101,7 +101,7 @@
 
                     nextDay = document.getElementById('nextDay');                                  
                     if(data.next_date.length){
-                        nextDay.innerHTML = data.next_date_txt+' >>';
+                        nextDay.innerHTML = data.next_day_txt+' >>';
                         nextDay.addEventListener('click', function() {            
                             load_date(data.next_date);
                         });

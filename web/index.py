@@ -6,20 +6,12 @@ from flask import Flask
 
 from Teplo500Web.WebApp import *
 from Teplo500Web.Pages.HomePage import *
+from Teplo500Web.REST.ClientREST import *
 
 flask_app = Flask(__name__)
 
 homepage_register(flask_app)
-
-'''
-@flask_app.route("/")
-def index():
-    webapp = WebApp()
-    if not webapp.init():
-        log_error('Can not initiate app')
-        exit(-1)
-    return webapp.run()
-''' 
+rest_register(flask_app)
 
 if __name__ == '__main__':
     flask_app.run(debug=True)

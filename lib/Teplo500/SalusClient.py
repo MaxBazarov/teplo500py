@@ -142,7 +142,7 @@ class SalusClient:
 		else:
 			return get_app().config['defaults.auto_update']
 		
-	def get_auto_update_txt(self):
+	def get_auto_upday_txt(self):
 		period = self.get_auto_update()
 		if period==0:
 			return locstr('Off')
@@ -267,11 +267,9 @@ class SalusClient:
 
 
 	def save_updated(self):
-##		if not self.save_history()) return False;
-##		if not self.run_alerts()) return False;
-		if not self.save_data():
-		 return False
-
+		if not self.save_history(): return False
+		if not self.run_alerts(): return False
+		if not self.save_data(): return False
 		return True
 	
 	def save_auth(self):

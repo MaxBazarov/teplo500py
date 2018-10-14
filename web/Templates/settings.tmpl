@@ -1,12 +1,12 @@
 <%!
-  from Teplo500.utils import locstr,date_str,temp_to_str
+  from Teplo500.utils import locstr,day_str,temp_to_str
 %>
 ${layout_top}
 
 	<h5>${locstr("Automatic Update/Settings")}</h5>
       <div>
           <div>
-            ${locstr("Interval: {1}",client.get_auto_update_txt())}
+            ${locstr("Interval: {1}",client.get_auto_upday_txt())}
         </div>
           <a class="btn btn-secondary btn-sm" href="${sys_settings_link}&cmd=edit_auto" role="button">${locstr("Change/Settings")}</a>
       </div>
