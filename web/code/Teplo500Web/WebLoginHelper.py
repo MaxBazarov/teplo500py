@@ -4,7 +4,8 @@ import os.path
 
 from flask import request
 
-from Teplo500.utils import *
+from Teplo500.core import *
+import Teplo500.core as core
 
 ## return WebLoginHelper instance or false(error) 
 def Create():
@@ -32,15 +33,13 @@ class WebLoginHelper:
 		else:
 			self.login_id = login_id
 			
-		app = get_app()
-		app.set_cookie('login_id',self.login_id,int(time.time())+60*60*24*360)
+		core.app.set_cookie('login_id',self.login_id,int(time.time())+60*60*24*360)
 		return True
 
 
 	def _get_folder_path(self):
 		log_error('----------------------')
-		app = get_app()
-		return app.home_path()+'/local/logins'
+		return core.app.home_path()+'/local/logins'
 
 
 	def logout(self):

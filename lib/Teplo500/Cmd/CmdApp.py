@@ -1,4 +1,4 @@
-from Teplo500.utils import *
+from Teplo500.core import *
 from Teplo500.AbstractApp import * 
 import Teplo500.SalusConnect
 

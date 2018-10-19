@@ -1,6 +1,7 @@
-from Teplo500.utils import *
-from Teplo500Web.web_utils import *
+from Teplo500.core import *
+from Teplo500Web.web_core import *
 import Teplo500.SalusZone
+import Teplo500.core as core
 from Teplo500Web.Pages.AbstractPage import *
 
 
@@ -19,37 +20,37 @@ def homepage_register(flask):
 
 def homepage_index():
 	page = HomePage()
-	return get_app().create_response(page.show_index())
+	return core.app.create_response(page.show_index())
 	
 def homepage_edit_device(device_id):
 	page = HomePage()	
 	page.device_id = device_id
 
-	return get_app().create_response( page.show_edit_device())
+	return core.app.create_response( page.show_edit_device())
 
 def homepage_save_device(device_id):
 	page = HomePage()
 	page.device_id = device_id
 
 	html = page.do_save_device()
-	return get_app().create_response( html )
+	return core.app.create_response( html )
 
 def homepage_edit_zone(zone_id):
 	page = HomePage()	
 	page.zone_id = zone_id
 
-	return get_app().create_response( page.show_edit_zone())
+	return core.app.create_response( page.show_edit_zone())
 
 def homepage_save_zone(zone_id):
 	page = HomePage()
 	page.zone_id = zone_id
 
 	html = page.do_save_zone()
-	return get_app().create_response( html )
+	return core.app.create_response( html )
 
 def homepage_update():
 	page = HomePage()
-	return get_app().create_response( page.do_update())
+	return core.app.create_response( page.do_update())
 
 
 class HomePage(AbstractPage):
@@ -60,15 +61,14 @@ class HomePage(AbstractPage):
 		self.ok_msg=''		
 
 	def show_index(self):
-		log_debug('1.1')
-		a = get_app()
 		## SHOW DEVICES+ZONES
 	
 		devices_html = ''
 		counter = 0
 		esm = False
 
-		for device in a.client.devices:
+		
+		for device in core.app.client.devices:
 			zones_html = '';          
 			for zone in device.zones:                
 				if zone.is_esm():
@@ -81,7 +81,7 @@ class HomePage(AbstractPage):
 			vars = {
 				'device':device,
 				'counter':counter,
-				'devices_total' : len(a.client.devices),
+				'devices_total' : len(core.app.client.devices),
 				'zones_html':zones_html
 			}
 			devices_html += self.compile_template('home_device.tmpl',vars)
@@ -97,24 +97,22 @@ class HomePage(AbstractPage):
 		vars = {
 			'error_msg' : self.error_msg,
 			'ok_msg' : self.ok_msg,
-			'home_update_link' : a.urls['HOME_SUBURL']+'/update',
-			'home_switch_esm_link' : a.urls['HOME_SUBURL']+'/'+choose(esm,'disable_esm','enable_esm'),
+			'home_update_link' : core.app.urls['HOME_SUBURL']+'/update',
+			'home_switch_esm_link' : core.app.urls['HOME_SUBURL']+'/'+choose(esm,'disable_esm','enable_esm'),
 			'home_switch_esm_text':choose(esm,locstr('Disable Energy Save'),locstr('Enable Energy Save')),
-			'updated_raw':a.client.data_updated_time,
-			'updated_text' : datetime.fromtimestamp(a.client.data_updated_time).strftime("M d H:i:s"),
+			'updated_raw':core.app.client.data_updated_time,
+			'updated_text' : datetime.fromtimestamp(core.app.client.data_updated_time).strftime("M d H:i:s"),
 			'devices_html':devices_html,
 			'chart_html':chart_html,
 			'sys_head_custom'  :  self.compile_template('home_head.tmpl',{}),
 			'sys_body_custom'  :  ''
 		}
 
-		log_debug('1.2')
 		return self.compile_page('home.tmpl',vars)
 
 
 	def show_edit_zone_temp(self,zone=None):
-		app = get_app()
-		client = app.client
+		client = core.app.client
 
 		if zone is None:
 			zone = self._get_current_zone()
@@ -147,8 +145,7 @@ class HomePage(AbstractPage):
 			if http_post_param("save")=='':
 				break;
 
-			app = get_app()
-			client = app.client;
+			client = core.app.client;
 			zone = self._get_current_zone()
 			
 			## check valid client id
@@ -169,8 +166,7 @@ class HomePage(AbstractPage):
 
 
 	def show_edit_zone(self,zone=None):
-		app = get_app()
-		client = app.client
+		client = core.app.client
 		zone = zone if zone!=None else self._get_current_zone()		
 
 		if not zone:
@@ -192,8 +188,7 @@ class HomePage(AbstractPage):
 			## check Cancel button
 			if http_post_param("save")=='': break
 
-			app = get_app()
-			client = app.client
+			client = core.app.client
 			zone = self._get_current_zone()
 			
 			## check valid client id
@@ -217,8 +212,7 @@ class HomePage(AbstractPage):
 
 
 	def show_edit_device(self,device=None):
-		app = get_app()
-		client = app.client
+		client = core.app.client
 		if device is None:
 			device =self._get_current_device()
 
@@ -228,7 +222,7 @@ class HomePage(AbstractPage):
 		vars = {
 			'error_msg' : self.error_msg,
 			'ok_msg' : self.ok_msg,
-			'form_url' : app.urls['HOME_SUBURL']+'/devices/'+device.id + "/save",
+			'form_url' : core.app.urls['HOME_SUBURL']+'/devices/'+device.id + "/save",
 			'name':device.name
 		}
 
@@ -240,7 +234,7 @@ class HomePage(AbstractPage):
 			## check Cancel button
 			if http_post_param("save")=='': break
 			
-			client = get_app().client;
+			client = core.app.client;
 			device = self._get_current_device()
 			
 			## check valid client id
@@ -268,7 +262,7 @@ class HomePage(AbstractPage):
 
 
 	def do_update(self):
-		client = get_app().client
+		client = core.app.client
 
 		if not client.update_from_site():
 			self.error_msg = locstr('Failed to update data.')
@@ -284,7 +278,7 @@ class HomePage(AbstractPage):
 		return self.show_index()
 
 	def do_switch_esm(self,enable_esm):
-		client = get_app().client
+		client = core.app.client
 
 		if not client.switch_esm(enable_esm):
 			self.error_msg = locstr('Failed to switch ESM.')
@@ -321,18 +315,16 @@ class HomePage(AbstractPage):
 		return self.show_index()
 
 
-	def _get_current_zone(self):
-		app = get_app()
+	def _get_current_zone(self):		
 		zone_id = self.zone_id
-		zone =  app.client.get_zone_by_id(zone_id) if zone_id!='' else None
+		zone =  core.app.client.get_zone_by_id(zone_id) if zone_id!='' else None
 		if zone is None:
 			 self.error_msg = locstr('Failed to find requested zone.')
 		return zone
 
 	def _get_current_device(self):
-		app = get_app()
 		device_id = self.device_id
-		device =  app.client.get_device_by_id(device_id) if device_id!='' else None
+		device =  core.app.client.get_device_by_id(device_id) if device_id!='' else None
 		if device is None:
 			 self.error_msg = locstr('Failed to find requested device.')
 		return device

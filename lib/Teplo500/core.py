@@ -1,15 +1,15 @@
-# coding=latin-1
 import requests
 import os.path
 from enum import Enum
 from time import time
-from datetime import date,datetime
+from datetime import date
+from datetime import datetime
 import json	
 
-_app = None
+app = None
 
 def get_app():
-	return _app
+	return app
 
 # DEFINE CONSTANTS
 class Log(Enum):
@@ -25,7 +25,7 @@ class Constants:
 ## ========================== LOCALISATION =========================== 
 ## localise string
 def locstr(str, param1=None, param2=None, param3=None):
-	str = _app.translate_string(str)
+	str = app.translate_string(str)
 
 	if param1 is not None:
 		str = str.replace('{1}',param1)
@@ -47,64 +47,69 @@ def temp_to_str(temp):
 	if temp==0:
 		return '0°'
 	elif temp>0:
-		return str(temp) + '°'
+		return str(temp) + u'\N{DEGREE SIGN}'
 	else:
-		return str(temp) + '°'
+		return str(temp) + u'\N{DEGREE SIGN}'
 	
 def c():    
     return hex(int(time()*10000000))[2:]
 
+class MyInterval:
+	def __init__(self,interval):
+		self.years = int(round(interval.days/365))
+		self.months = 0
+		self.days = interval.days
+		self.hours = int(round(interval.seconds/3600))
+		self.minutes = 0
+		self.seconds = interval.seconds
+		###
+		self.days = self.days - self.years*365
+		self.months = int(round(self.days/30.5))
+		self.days = self.days - int(self.months*30.5)
+
+		self.seconds = self.seconds - self.hours*3600		
+		self.minutes = int(round(self.seconds/60))
+		self.seconds = self.seconds - self.minutes*60		
+		
+
+	def get_txt(self):
+		formats = []
+
+		if self.years: formats.append("%y "+locstr('year(s)/timediff'))
+		if self.months: formats.append( "%M "+locstr('month(s)/timediff')) 
+		if self.days: formats.append("%d "+locstr('day(s)/timediff')) 
+		if self.hours: formats.append("%h "+locstr('hour(s)/timediff')) 	
+		if self.minutes: formats.append("%m "+locstr('minute(s)/timediff')) 
+		if self.seconds == 0  and not formats: return locstr('Updated right now/timediff')   	
+		if self.seconds != 0  and not formats: return locstr('Updated less than a minute ago/timediff')
+		if self.seconds != 0: formats.append("%s "+locstr('second(s)/timediff')) 
+
+		log_debug(str(formats))
+
+		## We use the two biggest parts 
+		formats.reverse()
+		if len(formats) > 1:
+			format = locstr('Updated: {1} and {2}/timediff',formats.pop(),formats.pop() )
+		else:
+			format = locstr('Updated: {1}/timediff',formats.pop())
+
+		res_str = format.replace("%s",str(int(self.seconds))).replace("%m",str(int(self.minutes))).replace("%h",str(int(self.hours)))
+		res_str = res_str.replace("%d",str(int(self.days))).replace("%M",str(int(self.months))).replace("%y",str(int(self.years)))
+
+		return res_str
+
+	
 ##  ========================== LOW LEVEL LIBRARY =========================== 
-def time_diff(start_time, end_time = None):
-	'''
-	TODO:
-	start = new DateTime(); 
-	start->setTimestamp($start_time);
-	$end = new DateTime("now");
-	if$end_time) $end->setTimestamp($end_time);
+## get time in unixtimestmp format (secs)
+def time_diff(start_time, end_time = None):	
+	
+	start = datetime.fromtimestamp(start_time)
+	end = datetime.now() if end_time is None else datetime.fromtimestamp(end_time)
 
+	interval = end - start
+	res = MyInterval(interval)
 
-    $interval = $end->diff($start); 
-    
-    $format = array(); 
-    if($interval->y !== 0) { 
-        $format[] = "%y ".locstr('year(s)/timediff'); 
-    } 
-    if($interval->m !== 0) { 
-        $format[] = "%m ".locstr('month(s)/timediff'); 
-    } 
-    if($interval->d !== 0) { 
-        $format[] = "%d ".locstr('day(s)/timediff'); 
-    } 
-    if($interval->h !== 0) { 
-        $format[] = "%h ".locstr('hour(s)/timediff'); 
-    } 
-    if($interval->i !== 0) { 
-        $format[] = "%i ".locstr('minute(s)/timediff'); 
-    } 
-    if($interval->s == 0  and !count($format)) {
-    	 return locstr('Updated right now/timediff');
-    } 
-    if($interval->s !== 0  and !count($format)) {
-    	 return locstr('Updated less than a minute ago/timediff');
-    }
-    if($interval->s !== 0) { 
-        $format[] = "%s ".locstr('second(s)/timediff');       
-    } 
-    
-    // We use the two biggest parts 
-    if(count($format) > 1) { 
-        $format = locstr('Updated: {1} and {2}/timediff',array_shift($format),array_shift($format) );
-    } else { 
-        $format = locstr('Updated: {1}/timediff',array_pop($format));
-    } 
-    
-    // Prepend 'since ' or whatever you like 
-    return $interval->format($format); 
-}
-	'''
-	return 0
-
+	return res.get_txt()
 
 def clear_textid(id):
 	id = id.replace('\\','')
@@ -119,7 +124,7 @@ def save_json_config(file_path, data):
 		with open(file_path, 'w') as fp:
 			json.dump(data,fp,sort_keys=False, indent=4)
 	except OSError as err:
-		log_error("save_json_config() {0}".format(err))
+		log_error("save_json_config() {0}"+format(err))
 		return False
 	except:
 		log_error("save_json_config(): Unexpected error:"+sys.exc_info()[0])		
@@ -138,7 +143,7 @@ def load_json_config(file_path):
 		with open (file_path, 'r') as fp:
 			config = json.load(fp)
 	except OSError as err:
-		log_error("load_json_config(): {0}".format(err))
+		log_error("load_json_config(): {0}"+format(err))
 		return None
 	except:
 		log_error("load_json_config(): Unexpected error:"+sys.exc_info()[0])		
@@ -148,12 +153,12 @@ def load_json_config(file_path):
 
 
 def log_text(level, text1, text2=''):
-	_app.log_text(level, text1, text2)
+	app.log_text(level, text1, text2)
 	return True
 
 def log_error(text1):
 	log_text(Log.ERR, text1)
-	return False ## special result to use it in code like :       $file = fopen(); if(!$file) return log_error('ERROR!!!!');
+	return False ## special result to use it in code like :       $file = fopen(); if(!$file) return log_error('ERROR!!!!')
 
 
 def log_ok(text1):

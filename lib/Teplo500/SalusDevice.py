@@ -3,7 +3,7 @@ import os,os.path,sys
 from io import StringIO
 from lxml import etree
 
-from Teplo500.utils import *
+from Teplo500.core import *
 from Teplo500.SalusConnect import *
 from Teplo500.salus_emul import *
 import Teplo500.SalusZone

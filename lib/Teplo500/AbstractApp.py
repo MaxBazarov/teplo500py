@@ -1,12 +1,12 @@
 import os, time, sys
 from Teplo500 import SalusConnect
-from Teplo500.utils import *
-import Teplo500.utils
+from Teplo500.core import *
+import Teplo500.core as core
 
 class AbstractApp:	
 
 	def __init__(self):	
-		Teplo500.utils._app = self	
+		core.app = self	
 
 		self.timezone = '' ## example: Europe/Moscow
 		self.lang = '' ## example: en
@@ -24,11 +24,13 @@ class AbstractApp:
 	
 	def init(self):
 		self.salus = SalusConnect.SalusConnect()		
-
-		## load system config		)
+		
+		## load system config
 		config = load_json_config('../local/system.conf')
 		if config is None:
-		   return False		   
+			print("Can not load system.conf")
+			exit(-1)
+
 		self.config = config
 
 		self.lang = config['defaults']['lang']

@@ -3,8 +3,8 @@ from datetime import date
 from datetime import datetime
 import json
 
-from Teplo500.utils import *
-from Teplo500.utils import Constants
+from Teplo500.core import *
+from Teplo500.core import Constants
 
 import Teplo500.SalusHistoryHelper
 from Teplo500Web.REST.AbstractREST import *

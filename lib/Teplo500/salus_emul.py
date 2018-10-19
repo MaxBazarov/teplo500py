@@ -1,5 +1,5 @@
 import os.path
-from Teplo500.utils import *
+from Teplo500.core import *
 import Teplo500.SalusConnect
 
 EMUL_DEVICES_ONLINE_FILE = "/local/fakes/devices_online.html"

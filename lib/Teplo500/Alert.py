@@ -1,7 +1,7 @@
 from datetime import date
 import time
 
-from Teplo500.utils import *
+from Teplo500.core import *
 import Teplo500.Emailer
 
 ALERT_IDS = ['low_temp']

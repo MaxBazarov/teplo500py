@@ -8,8 +8,8 @@ from datetime import date
 
 from flask import make_response,request
 
-from Teplo500Web.web_utils import *
-from Teplo500.utils import *
+from Teplo500Web.web_core import *
+from Teplo500.core import *
 from Teplo500.AbstractApp import *
 
 import Teplo500.SalusConnect
@@ -82,9 +82,13 @@ class WebApp(AbstractApp):
 
 		client_id = self.login_helper.try_login()
 		if client_id!='':
-   			self.client = SalusClient_CreateAndLoad(client_id)
-   			if self.client:
-   				self.client_id = client_id
+			self.client = SalusClient_CreateAndLoad(client_id)
+			log_debug("WebApp.init() tried to init client with ID:"+client_id)
+			if self.client:
+				log_debug("WebApp.init() inited client")
+				self.client_id = client_id
+		else:
+			log_debug("WebApp.init() client_id is empty")
 		
 		## switch salus mode
 		self.salus.set_mode(Teplo500.SalusConnect.MODE_REAL if self.config['web']['salus_mode']=='real' else Teplo500.SalusConnect.MODE_EMUL)

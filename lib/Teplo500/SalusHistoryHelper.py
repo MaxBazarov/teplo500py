@@ -2,7 +2,7 @@ from datetime import date, timedelta
 import time,sys
 import os.path
 
-from Teplo500.utils import *
+from Teplo500.core import *
 
 def save_client_history(client):
 

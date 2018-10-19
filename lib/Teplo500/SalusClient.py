@@ -6,7 +6,7 @@ from lxml import etree
 from datetime import date
 
 ## Own Libs
-from Teplo500.utils import *
+from Teplo500.core import *
 from Teplo500.Alert import *
 from Teplo500.SalusDevice import *
 import Teplo500.salus_emul
@@ -81,7 +81,7 @@ class SalusClient:
 		self.alert_email = ''
 		self.config = {}
 		self.devices = [] ## list of {SalusDevice}
-		self.data_updated_time = 0 ## time of last data update
+		self.data_updated_time = 0 ## unixtime of last data update
 
 		## PRIVATE 
 		self.login_email = ''
@@ -98,7 +98,7 @@ class SalusClient:
 			return True
 
 
-		now_period =  datetime.now() - self.data_updated_time
+		now_period =  int(time.time()) - self.data_updated_time
 
 		return now_period >= conf_period
 

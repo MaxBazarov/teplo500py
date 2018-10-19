@@ -1,5 +1,5 @@
 from mako.template import Template
-from Teplo500.utils import *
+from Teplo500.core import *
 
 import Teplo500Web.WebApp
 

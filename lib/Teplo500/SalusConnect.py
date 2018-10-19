@@ -1,4 +1,4 @@
-from Teplo500.utils import *
+from Teplo500.core import *
 from Teplo500.salus_emul import *
 from Teplo500 import SalusZone, SalusDevice, SalusClient
 

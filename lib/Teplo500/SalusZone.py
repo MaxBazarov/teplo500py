@@ -2,7 +2,7 @@ from io import StringIO
 from lxml import etree
 import time
 
-from Teplo500.utils import *
+from Teplo500.core import *
 from Teplo500.salus_emul import *
 from Teplo500 import SalusDevice, SalusClient
 

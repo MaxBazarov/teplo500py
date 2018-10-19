@@ -1,5 +1,5 @@
-from Teplo500.utils import *
-from Teplo500Web.web_utils import *
+from Teplo500.core import *
+from Teplo500Web.web_core import *
 import Teplo500.SalusZone
 from Teplo500Web.Pages.AbstractPage import *
 import time
