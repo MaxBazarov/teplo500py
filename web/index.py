@@ -6,11 +6,13 @@ from flask import Flask
 
 from Teplo500Web.WebApp import *
 from Teplo500Web.Pages.HomePage import *
+from Teplo500Web.Pages.SettingsPage import *
 from Teplo500Web.REST.ClientREST import *
 
 flask_app = Flask(__name__)
 
-homepage_register(flask_app)
+home_page_register(flask_app)
+settings_page_register(flask_app)
 rest_register(flask_app)
 
 if __name__ == '__main__':

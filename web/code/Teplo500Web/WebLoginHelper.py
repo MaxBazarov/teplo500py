@@ -4,8 +4,8 @@ import os.path
 
 from flask import request
 
-from Teplo500.core import *
-import Teplo500.core as core
+from teplo500.core import *
+import teplo500.core as core
 
 ## return WebLoginHelper instance or false(error) 
 def Create():

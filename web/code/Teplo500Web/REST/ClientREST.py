@@ -3,16 +3,16 @@ from datetime import date
 from datetime import datetime
 import json
 
-from Teplo500.core import *
-from Teplo500.core import Constants
+from teplo500.core import *
+from teplo500.core import Constants
 
-import Teplo500.SalusHistoryHelper
+import teplo500.SalusHistoryHelper
 from Teplo500Web.REST.AbstractREST import *
 
 
 def rest_register(flask):
-	flask.add_url_rule('/rest/get_chart_data/<sdate>', 'rest_client_get_data', rest_client_get_data)
-	return True
+    flask.add_url_rule('/rest/get_chart_data/<sdate>', 'rest_client_get_data', rest_client_get_data)
+    return True
 
 def rest_client_get_data(sdate):
 	rest = ClientREST()
@@ -30,12 +30,12 @@ class ClientREST(AbstractREST):
             return self.ShowNoData()
         odate = str_date(sdate)
 
-        found = Teplo500.SalusHistoryHelper.find_client_history(app.client,odate)
+        found = teplo500.SalusHistoryHelper.find_client_history(app.client,odate)
         if not found:
             log_debug('ClientREST.get_client_data(): find_client_history failed')
             return self.ShowNoData()
 
-        raw_data = Teplo500.SalusHistoryHelper.load_client_history(app.client,odate)
+        raw_data = teplo500.SalusHistoryHelper.load_client_history(app.client,odate)
         if raw_data is None:
             log_error('ClientREST.get_client_data(): failed to load client history')
             return self.ShowError()    

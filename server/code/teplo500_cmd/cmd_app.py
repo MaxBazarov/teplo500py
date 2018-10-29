@@ -1,10 +1,11 @@
-from Teplo500.core import *
-from Teplo500.AbstractApp import * 
-import Teplo500.SalusConnect
-
 import argparse
 import time
 from datetime import datetime
+
+from teplo500.core import *
+from teplo500.abstract_app import AbstractApp
+import teplo500.salus_client
+
 
 class CmdApp(AbstractApp):
 
@@ -44,9 +45,9 @@ class CmdApp(AbstractApp):
 		self.cmd = args.cmd;
 
 		if args.mode == 'real' :				
-			self.salus.set_mode(SalusConnect.MODE_REAL)
+			self.salus.set_mode(salus_connect.MODE_REAL)
 		elif args.mode == 'emul':				
-			self.salus.set_mode(SalusConnect.MODE_EMUL)
+			self.salus.set_mode(salus_connect.MODE_EMUL)
 		else:
 			## unknown application mode
 			log_error('app_init: unknown "mode"='+args.mode)
@@ -54,9 +55,9 @@ class CmdApp(AbstractApp):
 			return False	
 
 		if args.emul == 'online':				
-			self.salus.set_emul_submode( SalusConnect.EMUL_ONLINE )
+			self.salus.set_emul_submode( salus_connect.EMUL_ONLINE )
 		elif args.emul == 'offline':				
-			self.salus.set_emul_submode( SalusConnect.EMUL_OFFLINE )
+			self.salus.set_emul_submode( salus_connect.EMUL_OFFLINE )
 		else: ##unknown application mode
 			log_error('app_init: unknown "emul"='+args.emul);
 			self.cmd_print_args()
@@ -96,7 +97,7 @@ class CmdApp(AbstractApp):
 			if( not self.salus.update_clients_from_site(True)): return False	
 			return
 		elif self.cmd == 'create':
-			client = SalusClient.Factory_CreateAndRegister('Nikolay','89268884889@mail.ru','****')
+			client = salus_client.Factory_CreateAndRegister('Nikolay','89268884889@mail.ru','****')
 			if(client is None):
 				log_error('CmdApp: run: failed to create and register new client')
 			else:

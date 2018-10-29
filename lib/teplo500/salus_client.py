@@ -6,12 +6,11 @@ from lxml import etree
 from datetime import date
 
 ## Own Libs
-from Teplo500.core import *
-from Teplo500.Alert import *
-from Teplo500.SalusDevice import *
-import Teplo500.salus_emul
-import Teplo500.SalusHistoryHelper
-import Teplo500.Emailer
+from teplo500.core import *
+from teplo500.alert import ALERT_IDS,Alert
+from teplo500.SalusDevice import *
+import teplo500.salus_emul
+import teplo500.SalusHistoryHelper
 
 
 ## args:
@@ -119,8 +118,7 @@ class SalusClient:
 		log_e = lambda message: log_error('[CLIENT '+self.id+'] switch_esm(): '+message)
 		log_ok = lambda message: log_ok('[CLIENT '+self.id+'] switch_esm(): '+message)
 
-		log_d('switching into '+enable_esm)
-
+		log_d('switching into '+str(enable_esm))
 
 		for device in self.devices:
 			if not device.switch_esm(enable_esm):
@@ -140,7 +138,7 @@ class SalusClient:
 		if 'auto_update' in self.config:
 			return self.config['auto_update']
 		else:
-			return get_app().config['defaults.auto_update']
+			return get_app().config['defaults']['auto_update']
 		
 	def get_auto_upday_txt(self):
 		period = self.get_auto_update()
@@ -310,7 +308,7 @@ class SalusClient:
 		}	
 
 	def save_history(self):
-		return Teplo500.SalusHistoryHelper.save_client_history(self)
+		return teplo500.SalusHistoryHelper.save_client_history(self)
 	
 
 	def get_folder_path(self):
@@ -448,7 +446,7 @@ class SalusClient:
 				f.write(devices_html)
 		elif get_app().salus.is_emul_mode():
 			log_debug('SalusClient: _update_devices_from_site : load faked data from local file')
-			devices_html = Teplo500.salus_emul.emul_load_devices()
+			devices_html = teplo500.salus_emul.emul_load_devices()
 		else:
 			return log_error('salus_login: unknown app mode='+get_app().salus.mode())
 		

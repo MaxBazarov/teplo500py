@@ -9,22 +9,10 @@ from datetime import date
 from flask import make_response,request
 
 from Teplo500Web.web_core import *
-from Teplo500.core import *
-from Teplo500.AbstractApp import *
-
-import Teplo500.SalusConnect
-from Teplo500.SalusClient import *
-
-from Teplo500Web.REST.AbstractREST import *
-from Teplo500Web.REST.ClientREST import *
-from Teplo500Web.Pages.AbstractPage import *
+from teplo500.core import *
+from teplo500.abstract_app import AbstractApp
+import teplo500.salus_client
 import Teplo500Web.WebLoginHelper
-
-from Teplo500Web.Pages.AccountPage import *
-from Teplo500Web.Pages.HomePage import *
-from Teplo500Web.Pages.LoginPage import *
-from Teplo500Web.Pages.SettingsPage import *
-from Teplo500Web.Pages.ZoneEdit import *
 
 
 def CreateAndInit():
@@ -82,7 +70,7 @@ class WebApp(AbstractApp):
 
 		client_id = self.login_helper.try_login()
 		if client_id!='':
-			self.client = SalusClient_CreateAndLoad(client_id)
+			self.client = salus_client.SalusClient_CreateAndLoad(client_id)
 			log_debug("WebApp.init() tried to init client with ID:"+client_id)
 			if self.client:
 				log_debug("WebApp.init() inited client")
@@ -91,7 +79,7 @@ class WebApp(AbstractApp):
 			log_debug("WebApp.init() client_id is empty")
 		
 		## switch salus mode
-		self.salus.set_mode(Teplo500.SalusConnect.MODE_REAL if self.config['web']['salus_mode']=='real' else Teplo500.SalusConnect.MODE_EMUL)
+		self.salus.set_mode(teplo500.salus_connect.MODE_REAL if self.config['web']['salus_mode']=='real' else teplo500.salus_connect.MODE_EMUL)
 			
 		return True
 
@@ -110,7 +98,7 @@ class WebApp(AbstractApp):
 		if client_id=='':
 			return False
 		self.client_id = client_id
-		self.client = SalusClient_CreateAndLoad(self.client_id);
+		self.client = salus_client(self.client_id);
 		self.login_helper.save_login(client_id)
 		return True
 
@@ -168,50 +156,3 @@ class WebApp(AbstractApp):
 		for cookie in self.new_cookies:			
 			response.set_cookie(cookie['key'], cookie['value'],cookie['max_age'])
 		return response
-'''
-	def run(self):
-	
-		self.rest_page = http_get_param("rest_page")
-		if self.rest_page!='':
-			return self.run_rest()
-
-		self.page = http_get_param("page")
-		page_obj = None
-
-		## pre-checks
-		if self.page=='':
-			self.page = 'home'
-			
-		if self.client_id=='':
-			self.page = 'login'
-		
-		## init current page		)
-		if self.page=='login':
-			page_obj = LoginPage.LoginPage()
-		elif self.page=='account':
-			page_obj = AccountPage.AccountPage()
-		elif self.page=='settings':
-			page_obj = SettingsPage.SettingsPage()
-		elif self.page=='logout':
-			return self.redirect_to_login()
-		else:
-			log_debug('home')
-			page_obj = HomePage()
-
-		return self.create_response(page_obj.run())
-'''
-
-'''
-	def run_rest(self):
-		rest_obj = None
-
-		if self.client_id=='':
-			return AbstractREST.show_non_auth_error()
-		
-		if self.rest_page == 'client':			
-			rest_obj =  ClientREST()
-		else:
-			return AbstractREST.ShowUknownCmd()
-		
-		return rest_obj.run()
-'''

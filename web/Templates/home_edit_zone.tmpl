@@ -1,16 +1,15 @@
 <%!
-  from Teplo500.core import locstr,day_str
+  from teplo500.core import locstr,day_str
 %>
 
 ${layout_top}
 
 <h2>${locstr('Edit Zone')}</h2>
 
- % if error_msg!='':
- 	<div class="alert alert-danger" role="alert" style="display:none" >
-    	${error_msg}
-  	</div>
- % endif
+<div class="alert alert-danger" role="alert" style="${"display:none" if error_msg=='' else "" }" >
+  ${error_msg}
+</div>
+
 
 <form method="post" action="${form_url}">          
   <div class="form-group">

@@ -1,8 +1,8 @@
 from datetime import date
 import time
 
-from Teplo500.core import *
-import Teplo500.Emailer
+from teplo500.core import *
+from teplo500.emailer import Email, EmailTemplate
 
 ALERT_IDS = ['low_temp']
 
@@ -65,12 +65,12 @@ class LowTempAlert(AbstractAlert):
 		log_debug('LowTempAlert: test_client_zone: run alert because alert temp='+str(conf['temp'])+'  cond='+str(zone.current_temp > conf['temp']))
 		## current temp is equal or lower than alert temperatur
 
-		template =  Teplo500.Emailer.EmailTemplate('low_temp')
+		template =  EmailTemplate('low_temp')
 		template.client_name= client.name
 		template.current_temp = temp_to_str(zone.current_temp)
 		template.zone_name = zone.name
 
-		emailer = Teplo500.Emailer.Emailer(client.alert_email)
+		emailer = Emailer(client.alert_email)
 		emailer.set_template(template)
 		if not emailer.send():
 			log_error('LowTempAlert: test_client_zone: can not send email')

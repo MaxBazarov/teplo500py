@@ -1,6 +1,7 @@
-from Teplo500.core import *
-from Teplo500.salus_emul import *
-from Teplo500 import SalusZone, SalusDevice, SalusClient
+from teplo500.core import *
+from teplo500.salus_emul import *
+from teplo500 import SalusZone, SalusDevice
+import teplo500.salus_client
 
 MODE_REAL = 1
 MODE_EMUL = 2 
@@ -56,7 +57,7 @@ class SalusConnect:
 		## load every client
 		self.clients = []
 		for client_id in client_ids:
-			client = SalusClient.SalusClient_CreateAndLoad(client_id)
+			client = salus_client.SalusClient_CreateAndLoad(client_id)
 			if client is None:
 				log_error('SalusConnect: run: can create client with id"'+client_id+'"')
 				continue

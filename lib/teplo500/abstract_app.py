@@ -1,7 +1,8 @@
 import os, time, sys
-from Teplo500 import SalusConnect
-from Teplo500.core import *
-import Teplo500.core as core
+
+import teplo500.salus_connect
+from teplo500.core import *
+import teplo500.core as core
 
 class AbstractApp:	
 
@@ -23,7 +24,7 @@ class AbstractApp:
 		return True
 	
 	def init(self):
-		self.salus = SalusConnect.SalusConnect()		
+		self.salus = salus_connect.SalusConnect()		
 		
 		## load system config
 		config = load_json_config('../local/system.conf')

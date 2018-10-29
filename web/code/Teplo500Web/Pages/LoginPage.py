@@ -1,7 +1,7 @@
-from Teplo500.core import *
+from teplo500.core import *
 from Teplo500Web.web_core import *
-import Teplo500.SalusZone
-from Teplo500Web.Pages.AbstractPage import *
+import teplo500.SalusZone
+from Teplo500Web.Pages.abstract_page import *
 import time
 
 class LoginPage(AbstractPage):

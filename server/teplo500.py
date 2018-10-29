@@ -1,6 +1,6 @@
-import CmdApp
+import teplo500_cmd.cmd_app
 
-app = CmdApp.CmdApp()
+app = cmd_app.CmdApp()
 if( not app.init()):
 	log_error('Can not initiate app')
 	exit(-1)

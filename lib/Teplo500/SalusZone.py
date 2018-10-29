@@ -2,9 +2,9 @@ from io import StringIO
 from lxml import etree
 import time
 
-from Teplo500.core import *
-from Teplo500.salus_emul import *
-from Teplo500 import SalusDevice, SalusClient
+from teplo500.core import *
+from teplo500.salus_emul import *
+from teplo500 import SalusDevice
 
 ## PUBLIC CONSTANTS
 MODE_UKNOWN = 0

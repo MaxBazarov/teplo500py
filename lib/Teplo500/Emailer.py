@@ -1,7 +1,7 @@
 import os.path
 from mako.template import Template
 
-from Teplo500.core import *
+from teplo500.core import *
 
 TEMPLATES_FOLDER = '/system/email_templates'
 EMAILS_FOLDER = '/local/logs/emails'

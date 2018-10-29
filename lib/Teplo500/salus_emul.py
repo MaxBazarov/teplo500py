@@ -1,6 +1,5 @@
 import os.path
-from Teplo500.core import *
-import Teplo500.SalusConnect
+from teplo500.core import *
 
 EMUL_DEVICES_ONLINE_FILE = "/local/fakes/devices_online.html"
 EMUL_DEVICES_OFFLINE_FILE = "/local/fakes/devices_offline.html"
@@ -11,7 +10,7 @@ EMUL_DEVICES_OFFLINE_FILE = "/local/fakes/devices_offline.html"
 def emul_load_devices():
 
 	file_path = get_app().home_path()
-	if get_app().salus.emul_submode()==Teplo500.SalusConnect.EMUL_ONLINE:
+	if get_app().salus.emul_submode()==teplo500.salus_connect.EMUL_ONLINE:
 		file_path += EMUL_DEVICES_ONLINE_FILE
 	else:
 		file_path += MUL_DEVICES_OFFLINE_FILE

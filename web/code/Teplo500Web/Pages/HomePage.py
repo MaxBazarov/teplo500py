@@ -1,13 +1,13 @@
-from Teplo500.core import *
+from teplo500.core import *
 from Teplo500Web.web_core import *
-import Teplo500.SalusZone
-import Teplo500.core as core
-from Teplo500Web.Pages.AbstractPage import *
+import teplo500.SalusZone
+import teplo500.core as core
+from Teplo500Web.Pages.abstract_page import *
 
 
 import time
 
-def homepage_register(flask):
+def home_page_register(flask):
 	flask.add_url_rule('/', 'homepage_index', homepage_index)
 	flask.add_url_rule('/home', 'homepage_index', homepage_index)
 	flask.add_url_rule('/home/devices/<device_id>/edit', 'homepage_edit_device', homepage_edit_device)
@@ -16,6 +16,8 @@ def homepage_register(flask):
 	flask.add_url_rule('/home/zones/<zone_id>/save', 'homepage_save_zone', homepage_save_zone,methods=['POST'])
 	
 	flask.add_url_rule('/home/update', 'homepage_update', homepage_update)
+	flask.add_url_rule('/home/esm/enable', 'homepage_enable_esm', homepage_enable_esm)
+	flask.add_url_rule('/home/esm/disable', 'homepage_disable_esm', homepage_disable_esm)
 	return True
 
 def homepage_index():
@@ -53,6 +55,15 @@ def homepage_update():
 	return core.app.create_response( page.do_update())
 
 
+def homepage_enable_esm():
+	page = HomePage()
+	return core.app.create_response( page.do_switch_esm(True))
+
+def homepage_disable_esm():
+	page = HomePage()
+	return core.app.create_response( page.do_switch_esm(False))
+
+
 class HomePage(AbstractPage):
 		
 	def __init__(self):
@@ -69,10 +80,10 @@ class HomePage(AbstractPage):
 
 		
 		for device in core.app.client.devices:
-			zones_html = '';          
+			zones_html = ''          
 			for zone in device.zones:                
 				if zone.is_esm():
-					esm = true;
+					esm = True
 				vars = {
 					'zone':zone
 				}
@@ -98,7 +109,7 @@ class HomePage(AbstractPage):
 			'error_msg' : self.error_msg,
 			'ok_msg' : self.ok_msg,
 			'home_update_link' : core.app.urls['HOME_SUBURL']+'/update',
-			'home_switch_esm_link' : core.app.urls['HOME_SUBURL']+'/'+choose(esm,'disable_esm','enable_esm'),
+			'home_switch_esm_link' : core.app.urls['HOME_SUBURL']+'/esm/'+('disable' if esm else 'enable'),
 			'home_switch_esm_text':choose(esm,locstr('Disable Energy Save'),locstr('Enable Energy Save')),
 			'updated_raw':core.app.client.data_updated_time,
 			'updated_text' : datetime.fromtimestamp(core.app.client.data_updated_time).strftime("M d H:i:s"),
@@ -129,8 +140,8 @@ class HomePage(AbstractPage):
 			'error_msg' : self.error_msg,
 			'ok_msg' : self.ok_msg,
 			'temps':temps,
-			'form_url' : app.urls['HOME_SUBURL']+'/zones/'+str(zone.id)+"/save_temp",
-			'man_temp' : zone.current_mode_temp if (zone.mode==Teplo500.SalusZone.MODE_AUTO or zone.mode==Teplo500.SalusZone.MODE_MAN) else zone.current_temp,
+			'form_url' : core.app.urls['HOME_SUBURL']+'/zones/'+str(zone.id)+"/save_temp",
+			'man_temp' : zone.current_mode_temp if (zone.mode==teplo500.SalusZone.MODE_AUTO or zone.mode==teplo500.SalusZone.MODE_MAN) else zone.current_temp,
 			'name':zone.name   
 		}
 
@@ -143,14 +154,14 @@ class HomePage(AbstractPage):
 		while(True):
 			## check Cancel button
 			if http_post_param("save")=='':
-				break;
+				break
 
-			client = core.app.client;
+			client = core.app.client
 			zone = self._get_current_zone()
 			
 			## check valid client id
 			if zone is None: 
-				break;
+				break
 
 			## read submitted data
 			new_man_temp = http_post_param('man_temp').lstrip().rstip()
@@ -175,7 +186,7 @@ class HomePage(AbstractPage):
 		vars = {
 			'error_msg' : self.error_msg,
 			'ok_msg' : self.ok_msg,
-			'form_url' : app.urls['HOME_SUBURL']+'/zones/'+str(zone.id)+"/save",
+			'form_url' : core.app.urls['HOME_SUBURL']+'/zones/'+str(zone.id)+"/save",
 			'name':zone.name
 		}
 
@@ -198,7 +209,7 @@ class HomePage(AbstractPage):
 			zone.name = http_post_param('name').lstrip().rstrip()
 			if zone.name=='':
 				self.error_msg = locstr('Name should be specified.')
-				return self.show_edit_zone(zone);
+				return self.show_edit_zone(zone)
 
 			## save new data
 			if not client.save_data():
@@ -217,7 +228,7 @@ class HomePage(AbstractPage):
 			device =self._get_current_device()
 
 		if device is None:
-			return self.show_index();
+			return self.show_index()	
 
 		vars = {
 			'error_msg' : self.error_msg,
@@ -234,7 +245,7 @@ class HomePage(AbstractPage):
 			## check Cancel button
 			if http_post_param("save")=='': break
 			
-			client = core.app.client;
+			client = core.app.client
 			device = self._get_current_device()
 			
 			## check valid client id

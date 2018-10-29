@@ -3,10 +3,9 @@ import os,os.path,sys
 from io import StringIO
 from lxml import etree
 
-from Teplo500.core import *
-from Teplo500.SalusConnect import *
-from Teplo500.salus_emul import *
-import Teplo500.SalusZone
+from teplo500.core import *
+from teplo500.salus_emul import *
+import teplo500.SalusZone
 
 STATUS_UNDEFINED = 0
 STATUS_OFFLINE = 1
@@ -79,8 +78,8 @@ class SalusDevice:
 
 	def switch_esm(self,enable_esm):
 
-		log_d = lambda message:  log_debug('[SalusDevice '+self.id+'] switch_esm: '+message) 
-		log_ok = lambda msg: log_ok('[SalusDevice '+self.id+'] switch_esm: '+message)
+		log_d = lambda msg: log_debug('[SalusDevice '+self.id+'] switch_esm: '+msg) 
+		log_ok = lambda msg: log_ok('[SalusDevice '+self.id+'] switch_esm: '+msg)
 
 		if not len(self.zones):
 			return log_ok('No zones')
@@ -94,10 +93,11 @@ class SalusDevice:
 				'esoption' : choose(enable_esm,'0','1'),
 				'token': self.token
 			}
-			## GET DEVICE HTML FROM IT500 SITE
-			req = net_http_request( SalusConnect.SET_URL,SalusConnect.DEVICES_URL, data,'POST')
-			file_put_contents(get_app().home_path()+'/local/output/device_'+self.id+'_switch_esm.html',req.text);
-		
+			## GET DEVICE HTML FROM IT500 SITE			
+			req = net_http_request( get_app().salus.SET_URL,get_app().salus.DEVICES_URL, data,'POST')
+			dump_file_name = get_app().home_path()+'/local/output/device_'+str(self.id)+'_switch_esm.html'
+			with open(dump_file_name, 'w') as f:
+				f.write(req.text)		
 		
 		return log_ok('switched')
 		
@@ -117,7 +117,7 @@ class SalusDevice:
 		self.zones = []
 
 		for zone_data in data['zones']:
-			zone = Teplo500.SalusZone.SalusZone(self)
+			zone = teplo500.SalusZone.SalusZone(self)
 			zone.load(zone_data);
 
 			self.zones.append(zone)		
@@ -305,7 +305,7 @@ class SalusDevice:
 		req = net_http_request( get_app().salus.RENAME_DEVICE_URL,get_app().salus.DEVICES_URL, data,'POST', self.client.get_phpsessionid(),'text/html')
 
 		if not req:
-			return log_error('SalusDevice: save_name_to_site: failed to get "'+SalusConnect.RENAME_DEVICE_URL+'"')
+			return log_error('SalusDevice: save_name_to_site: failed to get "'+salus_connect.RENAME_DEVICE_URL+'"')
 	
 		log_ok('SalusDevice: save_name_to_site: completed')
 
