@@ -4,11 +4,20 @@
 ${layout_top}
 
 	<h5>${locstr("Automatic Update/Settings")}</h5>
+
+      <div class="alert alert-danger" role="alert" ${'style="display:none"' if error_msg=='' else ''}>
+        ${error_msg}
+      </div>
+    
+      <div class="alert alert-success" role="alert" ${'style="display:none"' if ok_msg=='' else ''} >
+        ${ok_msg}
+      </div>
+
       <div>
           <div>
             ${locstr("Interval: {1}",client.get_auto_upday_txt())}
         </div>
-          <a class="btn btn-secondary btn-sm" href="${sys_settings_link}&cmd=edit_auto" role="button">${locstr("Change/Settings")}</a>
+          <a class="btn btn-secondary btn-sm" href="${sys_settings_link}/edit" role="button">${locstr("Change/Settings")}</a>
       </div>
 
 ${layout_bottom}

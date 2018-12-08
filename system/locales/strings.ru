@@ -44,7 +44,8 @@
 	"You signed in as {1}":"Вы вошли как {1}",
 	"Failed to update data.":"Не удалось обновить данные",
 	"Failed to save updated data.":"Не удалось сохранить новые данные",
-	"Succesfully updated.":"Данные обновлены.",
+	"Data succesfully updated.":"Изменения внесены",
+	"Settings succesfully updated.":"Изменения внесены",
 	"Welcome to Teplo 500":"Тепло500 приветствует вас",
 	"Both email and password should be specified.":"Введите эл. адрес и пароль.",
 	"The email or password are wrong.":"Эл. адрес или пароль неверны."

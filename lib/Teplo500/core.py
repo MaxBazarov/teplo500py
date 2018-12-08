@@ -1,3 +1,4 @@
+import sys
 import requests
 import os.path
 from enum import Enum
