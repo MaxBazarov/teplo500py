@@ -1,11 +1,15 @@
 from teplo500web.web_core import *
 from teplo500 import core
+from teplo500.salus import salus_client
 from teplo500web.pages.abstract_page import AbstractPage
 
+
 def login_page_register(flask):
+    
     flask.add_url_rule('/login', 'login_page_show', login_page_show)
     flask.add_url_rule('/login/submit', 'login_page_submit', login_page_submit,methods=['POST'])
     return True
+
 
 def login_page_show():
     page  = LoginPage()
@@ -34,37 +38,37 @@ class LoginPage(AbstractPage):
         return self.compile_page('login.tmpl',vars)
 
 
-    def save(self):
+    def submit(self):
         while(True):
                 
             ## check Cancel button
-            if http_post_param("save")=='': break
-            
-            client = core.app.client
-            config = client.config
-            
-            ## check valid client
-            if client is None:
+            if http_post_param("login")=='': 
                 break
+            
+            log_debug('clicked on Login')
 
             ## read submitted data
-            config['auto_update'] = http_post_param('auto_update').lstrip().rstrip()
+            self.email = http_post_param('email').lstrip().rstrip()
+            self.pswd = http_post_param('password').lstrip().rstrip()            
 
-            ##if(!is_numeric($config.auto_update)){
-            ##	self.error_msg = locstr('The period should be a number.')
-            ##	return self.edit()
-            ##}           
+            # CHECK LOGIN 
+            if self.email=='' or self.pswd=='':
+                self.error_msg = locstr('Both email and password should be specified.')
+                break            
+ 
+            # TRY TO FIND CLIENT AND AUTORISE
+            client = salus_client.CreateAndLoad(self.email)
+            log_debug('try to validate password')
+            if client is None or not client.validate_password(self.pswd):
+                self.error_msg = locstr('The email or password are wrong.')
+                break
 
-            ## save new config
-            if not client.save_config():
-                self.error_msg = locstr('Failed to save settings')
-                return self.show_edit()
+            ## OK, AUTHORISED        
+            log_debug('logged!')
+            core.app.save_login(client.id)
+            return core.app.redirect_local(core.app.urls['HOME_SUBURL'])
 
-            self.ok_msg = locstr('Settings succesfully updated.')
-            break
-
-        return self.show()
-
+        return self.show()        
 
 '''
 class LoginPage extends AbstractPage

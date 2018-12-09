@@ -3,6 +3,7 @@ import requests
 import os.path
 from enum import Enum
 from time import time
+import time
 from datetime import date
 from datetime import datetime
 import json	
@@ -53,7 +54,7 @@ def temp_to_str(temp):
 		return str(temp) + u'\N{DEGREE SIGN}'
 	
 def c():    
-    return hex(int(time()*10000000))[2:]
+    return hex(int(time.time()*10000000))[2:]
 
 class MyInterval:
 	def __init__(self,interval):
@@ -128,7 +129,7 @@ def save_json_config(file_path, data):
 		log_error("save_json_config() {0}"+format(err))
 		return False
 	except:
-		log_error("save_json_config(): Unexpected error:"+sys.exc_info()[0])		
+		log_error("save_json_config(): Unexpected error. Can't save "+file_path)		
 		return False
 
 	return 	True
@@ -229,12 +230,8 @@ def net_http_request(url,referer,data,method,PHPSESSID='',content_type=''):
 	
 	return req
 
-
-
-import time
-
 def uniqid(prefix = ''):
-    return prefix + hex(int(time()))[2:10] + hex(int(time()*1000000) % 0x100000)[2:7]
+    return prefix + hex(int(time.time()))[2:10] + hex(int(time.time()*1000000) % 0x100000)[2:7]
 
 def day_today():
 	return date.today()

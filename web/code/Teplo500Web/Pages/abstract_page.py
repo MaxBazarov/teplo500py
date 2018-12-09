@@ -6,11 +6,10 @@ from teplo500web import web_app
 
 class AbstractPage:
 
-    def __init__(self):
-        web_app.CreateAndInit()
+    def __init__(self):        
         self.error_msg=""
         self.ok_msg=""
-
+        
 
     def compile_template(self, file_name, variables):
     
