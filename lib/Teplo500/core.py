@@ -47,7 +47,7 @@ def choose(check,value1,value2):
 ## ========================== LOW LEVEL LIBRARY =========================== 
 def temp_to_str(temp):	
 	if temp==0:
-		return '0°'
+		return '0'+u'\N{DEGREE SIGN}'
 	elif temp>0:
 		return str(temp) + u'\N{DEGREE SIGN}'
 	else:
@@ -142,7 +142,7 @@ def load_json_config(file_path):
 		return None
 	
 	try:
-		with open (file_path, 'r') as fp:
+		with open (file_path, encoding='utf-8', mode="r") as fp:
 			config = json.load(fp)
 	except OSError as err:
 		log_error("load_json_config(): {0}"+format(err))

@@ -1,8 +1,9 @@
 import os, time, sys
 
-from teplo500.salus.salus_connect import SalusConnect
 from teplo500.core import *
 from teplo500 import core
+from teplo500.salus.salus_connect import SalusConnect
+
 
 class AbstractApp:	
 
@@ -27,10 +28,10 @@ class AbstractApp:
 		self.salus = SalusConnect()		
 		
 		## load system config
-		config = load_json_config('../local/system.conf')
+		config = load_json_config('/usr/local/teplo500/local/system.conf')
 		if config is None:
 			print("Can not load system.conf")
-			exit(-1)
+			return False
 
 		self.config = config
 
@@ -61,7 +62,7 @@ class AbstractApp:
 		## load new locale
 		if lang not in self.locales:
 
-			new_locale = load_json_config('../system/locales/strings.'+lang)
+			new_locale = load_json_config(self.home_path()+'/system/locales/strings.'+lang)
 			if new_locale is None:
 				log_error('AbstractApp: translate_string: No locale for lang"'+lang+'"')
 				return 'NO LOCALE FOR '+lang

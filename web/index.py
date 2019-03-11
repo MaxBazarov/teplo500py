@@ -4,7 +4,7 @@ sys.path.insert(2, "/Users/baza/Github/teplo500py/web/code")
 
 from flask import Flask
 
-from teplo500web import web_app
+from teplo500web import web_app as application
 from teplo500web.pages import settings_page
 from teplo500web.pages import home_page
 from teplo500web.pages import account_page

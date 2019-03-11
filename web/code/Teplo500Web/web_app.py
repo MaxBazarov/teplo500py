@@ -1,6 +1,6 @@
-import urllib.parse as urlparse
-import cgitb
-import cgi
+#import urllib.parse as urlparse
+#import cgitb
+#import cgi
 import os.path
 import sys
 import json
@@ -13,9 +13,9 @@ from flask import redirect
 from teplo500web.web_core import *
 from teplo500.core import *
 from teplo500 import core
+from teplo500.salus import salus_client
 from teplo500.abstract_app import AbstractApp
 from teplo500.salus import salus_connect
-from teplo500.salus import salus_client
 from teplo500web import web_login_helper
 
 
@@ -156,7 +156,7 @@ class WebApp(AbstractApp):
             Log.DBG:' [DBG ] '
         }
 
-        fp = open(self._messages_log_path(), 'a')
+        fp = open(self._messages_log_path(),  encoding='utf-8', mode='a')
         fp.write('['+stime+']'+ prefixes[level] + text1 + text2 +"\n")
         fp.close()
 

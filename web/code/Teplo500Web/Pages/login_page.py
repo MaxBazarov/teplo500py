@@ -40,6 +40,7 @@ class LoginPage(AbstractPage):
 
     def submit(self):
         while(True):
+            self.error_msg = 'ssss'
                 
             ## check Cancel button
             if http_post_param("login")=='': 
@@ -59,7 +60,7 @@ class LoginPage(AbstractPage):
             # TRY TO FIND CLIENT AND AUTORISE
             client = salus_client.CreateAndLoad(self.email)
             log_debug('try to validate password')
-            if client is None or not client.validate_password(self.pswd):
+            if not client or not client.validate_password(self.pswd):
                 self.error_msg = locstr('The email or password are wrong.')
                 break
 
